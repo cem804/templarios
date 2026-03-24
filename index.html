@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClashBR - Aliança de Clãs</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0a06;
+  --bg2:#141009;
+  --card:#1c1610;
+  --card2:#231c12;
+  --orange:#f97316;
+  --orange2:#ea6c10;
+  --gold:#c9963a;
+  --gold2:#e8c060;
+  --text:#d4b896;
+  --muted:#7a6a55;
+  --border:#2e2516;
+  --border2:#3d3020;
+  --red:#e24b4a;
+  --green:#4caf50;
+  --blue:#4a9eff;
+  --purple:#9b72dd;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:#0d0a06ee;border-bottom:1px solid var(--border2);backdrop-filter:blur(8px);}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:8px;height:56px;}
+.logo{font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:var(--gold2);letter-spacing:1px;flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;}
+.logo-icon{font-size:22px;}
+.nav-links{display:flex;gap:2px;}
+.nav-btn{background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;transition:.15s;letter-spacing:.3px;}
+.nav-btn:hover,.nav-btn.active{color:var(--text);background:var(--border2);}
+.nav-btn.active{color:var(--orange);}
+.nav-login{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:6px 14px;border-radius:6px;cursor:pointer;margin-left:8px;transition:.15s;}
+.nav-login:hover{background:var(--orange2);}
+@media(max-width:580px){.nav-btn{padding:6px 8px;font-size:12px;}.logo{font-size:15px;}}
+
+/* PAGES */
+.page{display:none;max-width:1100px;margin:0 auto;padding:24px 16px 48px;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* HERO */
+.hero{text-align:center;padding:48px 0 32px;}
+.hero-tag{display:inline-block;background:var(--border2);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 12px;border-radius:4px;margin-bottom:16px;text-transform:uppercase;}
+.hero h1{font-family:'Cinzel',serif;font-size:clamp(28px,5vw,52px);font-weight:700;color:#fff;line-height:1.15;margin-bottom:12px;text-shadow:0 0 40px #f9731640;}
+.hero h1 span{color:var(--gold2);}
+.hero p{color:var(--muted);font-size:16px;max-width:480px;margin:0 auto 28px;}
+.hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;}
+.hero-stat{text-align:center;}
+.hero-stat .num{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--orange);}
+.hero-stat .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* SECTION TITLE */
+.sec-title{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border2);}
+
+/* CLAN CARDS */
+.clan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:40px;}
+.clan-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;transition:.2s;cursor:pointer;}
+.clan-card:hover{border-color:var(--gold);background:var(--card2);}
+.clan-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.clan-badge{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.clan-info h3{font-size:14px;font-weight:700;color:#fff;line-height:1.2;}
+.clan-info .tag{font-size:11px;color:var(--muted);}
+.clan-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.meta-pill{font-size:11px;background:var(--bg2);border:1px solid var(--border2);color:var(--muted);padding:2px 8px;border-radius:4px;}
+.meta-pill.th{color:var(--gold);border-color:#3d3020;}
+.clan-btn{width:100%;background:none;border:1px solid var(--orange);color:var(--orange);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:6px;border-radius:6px;cursor:pointer;transition:.15s;}
+.clan-btn:hover{background:var(--orange);color:#fff;}
+
+/* FILTER BAR */
+.filter-bar{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.filter-label{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px;}
+.filter-select{background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;padding:5px 10px;border-radius:6px;cursor:pointer;outline:none;}
+.filter-select:focus{border-color:var(--orange);}
+.tag-filters{display:flex;gap:6px;flex-wrap:wrap;}
+.tag-pill{background:var(--bg2);border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;transition:.15s;letter-spacing:.4px;}
+.tag-pill:hover,.tag-pill.active{border-color:currentColor;}
+.tag-pill.active.war{color:#f97316;border-color:#f97316;background:#f9731615;}
+.tag-pill.active.farm{color:#4caf50;border-color:#4caf50;background:#4caf5015;}
+.tag-pill.active.ranked{color:#9b72dd;border-color:#9b72dd;background:#9b72dd15;}
+.tag-pill.active.upgrade{color:#4a9eff;border-color:#4a9eff;background:#4a9eff15;}
+.tag-pill.active.trophy{color:#e8c060;border-color:#e8c060;background:#e8c06015;}
+.tag-pill.active.hybrid{color:#e24b4a;border-color:#e24b4a;background:#e24b4a15;}
+.tag-pill.active.all{color:var(--text);border-color:var(--border2);background:var(--border2);}
+
+/* LAYOUT GRID */
+.layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.layout-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;overflow:hidden;transition:.2s;cursor:pointer;}
+.layout-card:hover{border-color:var(--orange);transform:translateY(-2px);}
+.layout-card.indicado{border-color:var(--gold);}
+.layout-img{width:100%;height:150px;object-fit:cover;background:var(--card2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.layout-img-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3;}
+.layout-img-overlay{position:absolute;top:8px;left:8px;display:flex;gap:6px;flex-wrap:wrap;}
+.th-badge{background:#000a;color:var(--gold2);font-size:11px;font-weight:700;padding:3px 7px;border-radius:4px;border:1px solid var(--gold);backdrop-filter:blur(4px);}
+.ind-badge{background:#c9963aee;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;}
+.layout-body{padding:12px 14px;}
+.layout-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.layout-desc{font-size:12px;color:var(--muted);margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;}
+.layout-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.ltag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.4px;}
+.ltag.war{background:#f9731620;color:#f97316;border:1px solid #f9731640;}
+.ltag.farm{background:#4caf5020;color:#4caf50;border:1px solid #4caf5040;}
+.ltag.ranked{background:#9b72dd20;color:#9b72dd;border:1px solid #9b72dd40;}
+.ltag.upgrade{background:#4a9eff20;color:#4a9eff;border:1px solid #4a9eff40;}
+.ltag.trophy{background:#e8c06020;color:#e8c060;border:1px solid #e8c06040;}
+.ltag.hybrid{background:#e24b4a20;color:#e24b4a;border:1px solid #e24b4a40;}
+.layout-footer{display:flex;align-items:center;gap:0;border-top:1px solid var(--border);padding-top:10px;}
+.layout-stats{display:flex;gap:12px;flex:1;}
+.lstat{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);}
+.lstat svg{width:13px;height:13px;opacity:.7;}
+.layout-author{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.layout-author span{color:var(--text);font-weight:600;}
+.coc-btn{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:.15s;}
+.coc-btn:hover{background:var(--orange2);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:#000b;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:400px;padding:28px 24px;}
+.modal-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);text-align:center;margin-bottom:6px;}
+.modal-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:24px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase;}
+.field input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;transition:.15s;}
+.field input:focus{border-color:var(--orange);}
+.btn-main{width:100%;background:var(--orange);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;padding:11px;border-radius:8px;cursor:pointer;transition:.15s;margin-top:4px;}
+.btn-main:hover{background:var(--orange2);}
+.modal-forgot{text-align:center;margin-top:14px;font-size:13px;color:var(--muted);}
+.modal-forgot a{color:var(--orange);cursor:pointer;text-decoration:none;}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
+.modal-wrap{position:relative;}
+
+/* SUBMIT PAGE */
+.submit-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:24px;max-width:580px;margin:0 auto;}
+.submit-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);margin-bottom:6px;}
+.submit-sub{color:var(--muted);font-size:13px;margin-bottom:24px;}
+.field textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;transition:.15s;resize:vertical;min-height:80px;}
+.field textarea:focus{border-color:var(--orange);}
+.field select{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;cursor:pointer;}
+.tags-check{display:flex;gap:8px;flex-wrap:wrap;}
+.tag-check{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.tag-check input{accent-color:var(--orange);}
+.tag-check span{font-size:13px;font-weight:600;}
+.upload-zone{border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:.15s;}
+.upload-zone:hover{border-color:var(--orange);background:var(--bg2);}
+.upload-icon{font-size:28px;margin-bottom:8px;opacity:.5;}
+.upload-txt{font-size:13px;color:var(--muted);}
+.upload-txt span{color:var(--orange);font-weight:600;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+.not-logged{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:40px 24px;text-align:center;max-width:400px;margin:0 auto;}
+.not-logged .icon{font-size:40px;margin-bottom:16px;opacity:.6;}
+.not-logged h3{font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:8px;}
+.not-logged p{color:var(--muted);font-size:14px;margin-bottom:20px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--green);color:var(--text);padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;transform:translateY(100px);transition:.3s;border-left:3px solid var(--green);}
+.toast.show{transform:translateY(0);}
+
+/* FORGOT PAGE */
+.forgot-info{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:32px 24px;max-width:400px;margin:40px auto;text-align:center;}
+.forgot-info .icon{font-size:36px;margin-bottom:16px;}
+.forgot-info h3{font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:10px;}
+.forgot-info p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:16px;}
+.wz-btn{display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;cursor:pointer;}
+
+/* DETAIL VIEW */
+.detail-back{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:20px;background:none;border:none;font-family:'Nunito',sans-serif;}
+.detail-back:hover{color:var(--text);}
+.detail-img{width:100%;max-height:340px;object-fit:cover;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.3;margin-bottom:20px;min-height:200px;}
+.detail-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.detail-title{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fff;flex:1;}
+.detail-body{display:grid;grid-template-columns:1fr 300px;gap:20px;}
+@media(max-width:680px){.detail-body{grid-template-columns:1fr;}}
+.detail-desc{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px;}
+.detail-desc h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.detail-desc p{font-size:14px;color:var(--text);line-height:1.7;}
+.detail-meta{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;}
+.meta-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.meta-row:last-child{border-bottom:none;}
+.meta-row .k{color:var(--muted);}
+.meta-row .v{color:var(--text);font-weight:600;}
+.comments-section{margin-top:20px;}
+.comment-box{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.comment-user{font-size:12px;font-weight:700;color:var(--orange);margin-bottom:4px;}
+.comment-text{font-size:13px;color:var(--text);line-height:1.6;}
+.comment-date{font-size:11px;color:var(--muted);margin-top:4px;}
+.comment-input-row{display:flex;gap:8px;margin-top:12px;}
+.comment-input-row input{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;padding:8px 12px;border-radius:7px;outline:none;}
+.comment-input-row input:focus{border-color:var(--orange);}
+.comment-send{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:7px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo" onclick="showPage('home')">
+      <span class="logo-icon">⚔️</span>
+      ClashBR
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn active" id="nb-home" onclick="showPage('home')">Início</button>
+      <button class="nav-btn" id="nb-layouts" onclick="showPage('layouts')">Layouts</button>
+      <button class="nav-btn" id="nb-enviar" onclick="showPage('enviar')">Enviar</button>
+    </div>
+    <button class="nav-login" id="nav-login-btn" onclick="openModal()">Entrar</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-tag">⚔️ Aliança Brasileira</div>
+    <h1>Domine o <span>Clash</span><br>com os melhores layouts</h1>
+    <p>A maior aliança de clãs brasileiros. Layouts aprovados, estratégias de guerra e muito mais.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">8</div><div class="lbl">Clãs</div></div>
+      <div class="hero-stat"><div class="num">247</div><div class="lbl">Membros</div></div>
+      <div class="hero-stat"><div class="num">134</div><div class="lbl">Layouts</div></div>
+      <div class="hero-stat"><div class="num">98%</div><div class="lbl">Win rate</div></div>
+    </div>
+  </div>
+
+  <div class="sec-title">🏆 Layouts Indicados</div>
+  <div class="layout-grid" id="home-featured"></div>
+
+  <div class="sec-title" style="margin-top:32px;">🛡️ Nossos Clãs</div>
+  <div class="clan-grid" id="clan-grid"></div>
+</div>
+
+<!-- LAYOUTS -->
+<div class="page" id="page-layouts">
+  <div style="margin-bottom:20px;">
+    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold2);margin-bottom:4px;">📐 Galeria de Layouts</div>
+    <div style="color:var(--muted);font-size:14px;">Filtre por TH e tipo de layout</div>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-row" style="margin-bottom:10px;">
+      <span class="filter-label">Town Hall:</span>
+      <select class="filter-select" id="th-filter" onchange="renderLayouts()">
+        <option value="all">Todos</option>
+        <option value="9">TH 9</option>
+        <option value="10">TH 10</option>
+        <option value="11">TH 11</option>
+        <option value="12">TH 12</option>
+        <option value="13">TH 13</option>
+        <option value="14">TH 14</option>
+        <option value="15">TH 15</option>
+        <option value="16">TH 16</option>
+        <option value="17">TH 17</option>
+      </select>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Tipo:</span>
+      <div class="tag-filters" id="tag-filters">
+        <span class="tag-pill active all" data-tag="all" onclick="setTag('all')">Todos</span>
+        <span class="tag-pill war" data-tag="war" onclick="setTag('war')">WAR</span>
+        <span class="tag-pill farm" data-tag="farm" onclick="setTag('farm')">FARM</span>
+        <span class="tag-pill ranked" data-tag="ranked" onclick="setTag('ranked')">RANKED</span>
+        <span class="tag-pill upgrade" data-tag="upgrade" onclick="setTag('upgrade')">UPGRADE</span>
+        <span class="tag-pill trophy" data-tag="trophy" onclick="setTag('trophy')">TROPHY</span>
+        <span class="tag-pill hybrid" data-tag="hybrid" onclick="setTag('hybrid')">HYBRID</span>
+      </div>
+    </div>
+  </div>
+  <div class="layout-grid" id="layout-grid"></div>
+</div>
+
+<!-- ENVIAR -->
+<div class="page" id="page-enviar">
+  <div id="enviar-logged" style="display:none;">
+    <div class="submit-card">
+      <div class="submit-title">📤 Enviar Layout</div>
+      <div class="submit-sub">Seu layout será revisado por um moderador antes de aparecer na galeria.</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Town Hall</label>
+          <select class="field" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;">
+            <option>TH 9</option><option>TH 10</option><option>TH 11</option><option>TH 12</option>
+            <option>TH 13</option><option>TH 14</option><option selected>TH 15</option><option>TH 16</option><option>TH 17</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nome do Layout</label>
+          <input type="text" placeholder="Ex: Anti-3 estrelas TH15">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tipos (pode marcar mais de um)</label>
+        <div class="tags-check">
+          <label class="tag-check"><input type="checkbox"><span style="color:#f97316;">WAR</span></label>
+          <label class="tag-check"><input type="checkbox"><span style="color:#4caf50;">FARM</span></label>
+          <label class="tag-check"><input type="checkbox"><span style="color:#9b72dd;">RANKED</span></label>
+          <label class="tag-check"><input type="checkbox"><span style="color:#4a9eff;">UPGRADE</span></label>
+          <label class="tag-check"><input type="checkbox"><span style="color:#e8c060;">TROPHY</span></label>
+          <label class="tag-check"><input type="checkbox"><span style="color:#e24b4a;">HYBRID</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Link do Layout (CoC)</label>
+        <input type="text" placeholder="https://link.clashofclans.com/?action=OpenLayout&id=...">
+      </div>
+      <div class="field">
+        <label>Print do Layout (1 imagem)</label>
+        <div class="upload-zone">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-txt">Arraste ou <span>clique para selecionar</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">PNG/JPG • máx 2MB</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descrição</label>
+        <textarea placeholder="Explica como usar o layout, pontos fortes, quais ataques ele protege..."></textarea>
+      </div>
+      <button class="btn-main" onclick="showToast()">Enviar para Aprovação ⚔️</button>
+    </div>
+  </div>
+  <div id="enviar-logoff">
+    <div class="not-logged">
+      <div class="icon">🔐</div>
+      <h3>Faça login para enviar</h3>
+      <p>Você precisa estar logado para enviar layouts. Após enviar, um moderador irá revisar antes de publicar.</p>
+      <button class="btn-main" onclick="openModal()" style="width:auto;padding:10px 24px;">Fazer Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETALHE -->
+<div class="page" id="page-detail">
+  <button class="detail-back" onclick="showPage('layouts')">← Voltar aos Layouts</button>
+  <div id="detail-content"></div>
+</div>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="modal-overlay" style="display:none;" onclick="closeModalOutside(event)">
+  <div class="modal modal-wrap">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">⚔️ Entrar</div>
+    <div class="modal-sub">Acesse com seu usuário da aliança</div>
+    <div class="field"><label>Usuário</label><input type="text" placeholder="seu_usuario" id="inp-user"></div>
+    <div class="field"><label>Senha</label><input type="password" placeholder="••••••••" id="inp-pass"></div>
+    <button class="btn-main" onclick="doLogin()">Entrar</button>
+    <div class="modal-forgot">Esqueceu a senha? <a onclick="showPage('forgot');closeModal()">Saiba como recuperar</a></div>
+  </div>
+</div>
+
+<!-- FORGOT -->
+<div class="page" id="page-forgot">
+  <div class="forgot-info">
+    <div class="icon">📱</div>
+    <h3>Recuperar Acesso</h3>
+    <p>Não temos email cadastrado pra evitar complicação. Fala com um <strong style="color:var(--text);">Admin</strong> no grupo da aliança e ele vai resetar sua senha.</p>
+    <button class="wz-btn">💬 Falar no WhatsApp</button>
+    <div style="margin-top:16px;"><a onclick="openModal()" style="color:var(--orange);cursor:pointer;font-size:13px;">← Voltar ao login</a></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Layout enviado! Aguarde aprovação de um moderador.</div>
+
+<script>
+const CLANS=[
+  {name:"⚔️ Guerreiros BR",tag:"#2PP2YQYP",level:18,members:"45/50",minTH:"TH15",trophies:"3000",color:"#f97316",icon:"🔥"},
+  {name:"🛡️ Defesa Total",tag:"#ABCD1234",level:14,members:"38/50",minTH:"TH14",trophies:"2500",color:"#4a9eff",icon:"🛡️"},
+  {name:"🌾 FarmBR Elite",tag:"#QWER5678",level:11,members:"42/50",minTH:"TH12",trophies:"1500",color:"#4caf50",icon:"🌾"},
+  {name:"🏆 Trophy Rush",tag:"#ZXCV9012",level:16,members:"50/50",minTH:"TH15",trophies:"4000",color:"#e8c060",icon:"🏆"},
+  {name:"💀 Dark Legion",tag:"#DARK1234",level:20,members:"48/50",minTH:"TH16",trophies:"5000",color:"#9b72dd",icon:"💀"},
+  {name:"⚡ Speed Clan",tag:"#SPED5678",level:9,members:"30/50",minTH:"TH10",trophies:"1000",color:"#4a9eff",icon:"⚡"},
+  {name:"🌙 Noturno BR",tag:"#NOTU0001",level:13,members:"44/50",minTH:"TH13",trophies:"2000",color:"#e24b4a",icon:"🌙"},
+  {name:"🎯 Precisão War",tag:"#PREC9999",level:17,members:"46/50",minTH:"TH15",trophies:"3500",color:"#c9963a",icon:"🎯"},
+];
+const EMOJIS=["🏰","⚔️","🛡️","💥","🌋","🗡️","🔥","💀","⚡","🏹"];
+const LAYOUTS=[
+  {id:1,title:"Anti-3 Estrelas Clássico",th:15,tags:["war"],desc:"Layout focado em dificultar o 3 estrelas em guerra. Compartimento central bem protegido com Eagle Artillery estratégico.",author:"ZeWarrior",views:1240,likes:87,comments:12,indicado:true,coc:"https://link.clashofclans.com"},
+  {id:2,title:"Farming Passivo TH16",th:16,tags:["farm"],desc:"Recursos bem protegidos no centro, townhall exposto pra não perder escudo. Ótimo pra dormir farmando.",author:"FarmKing",views:892,likes:54,comments:6,indicado:false,coc:"https://link.clashofclans.com"},
+  {id:3,title:"Legends Ranked Completo",th:17,tags:["ranked","war"],desc:"Layout competitivo para Legends League. Testado e aprovado por jogadores top 1000 global.",author:"LegendPlayer",views:3400,likes:210,comments:45,indicado:true,coc:"https://link.clashofclans.com"},
+  {id:4,title:"Upgrade Safe TH13",th:13,tags:["upgrade"],desc:"Layout pra quando tá upando o TH. Townhall protegido pra não tomar muito enquanto tá em obras.",author:"NoobMaster99",views:567,likes:33,comments:4,indicado:false,coc:"https://link.clashofclans.com"},
+  {id:5,title:"Trophy Push 5000+",th:15,tags:["trophy"],desc:"Focado em manter troféus altos. Defesas organizadas pra maximizar danos aos atacantes.",author:"TrophyHunter",views:1100,likes:76,comments:9,indicado:false,coc:"https://link.clashofclans.com"},
+  {id:6,title:"Hybrid War/Farm TH14",th:14,tags:["hybrid","war","farm"],desc:"O melhor dos dois mundos. Protege recurso E é difícil de 3 estrelas. Perfeito pra quem joga casual.",author:"HybridMaster",views:2200,likes:143,comments:28,indicado:true,coc:"https://link.clashofclans.com"},
+  {id:7,title:"Anti-Drag TH12",th:12,tags:["war"],desc:"Especialmente projetado pra baralhar Dragon Lightning, muito usado no TH12.",author:"DefenseKing",views:445,likes:28,comments:3,indicado:false,coc:"https://link.clashofclans.com"},
+  {id:8,title:"Speed Farm TH11",th:11,tags:["farm","upgrade"],desc:"Coloca no farm e esquece. Simples, funcional, sem frescura.",author:"SimpleFarm",views:310,likes:19,comments:2,indicado:false,coc:"https://link.clashofclans.com"},
+  {id:9,title:"CWL War Beast TH16",th:16,tags:["war","ranked"],desc:"Desenvolvido especialmente pra CWL. Posicionamento das Scattershots é o diferencial.",author:"CWLPro",views:1890,likes:122,comments:31,indicado:true,coc:"https://link.clashofclans.com"},
+  {id:10,title:"Trophy Noturno TH14",th:14,tags:["trophy","farm"],desc:"Pra quem quer empurrar troféu à noite sem ficar acordado. Defesa que funciona sozinha.",author:"NightOwl",views:678,likes:44,comments:7,indicado:false,coc:"https://link.clashofclans.com"},
+];
+let activeTag='all';
+let loggedIn=false;
+let loggedUser={name:'',clash:''};
+
+function tagColor(t){return{war:'war',farm:'farm',ranked:'ranked',upgrade:'upgrade',trophy:'trophy',hybrid:'hybrid'}[t]||'war';}
+
+function layoutCard(l,compact){
+  const thc=`<span class="th-badge">TH ${l.th}</span>`;
+  const indc=l.indicado?`<span class="ind-badge">⭐ INDICADO</span>`:'';
+  const tags=l.tags.map(t=>`<span class="ltag ${tagColor(t)}">${t.toUpperCase()}</span>`).join('');
+  const emoji=EMOJIS[l.id%EMOJIS.length];
+  return`<div class="layout-card ${l.indicado?'indicado':''}" onclick="showDetail(${l.id})">
+    <div class="layout-img"><div class="layout-img-inner">${emoji}</div>
+      <div class="layout-img-overlay">${thc}${indc}</div>
+    </div>
+    <div class="layout-body">
+      <div class="layout-title">${l.title}</div>
+      <div class="layout-author">por <span>${l.author}</span></div>
+      <div class="layout-tags">${tags}</div>
+      <div class="layout-desc">${l.desc}</div>
+      <div class="layout-footer">
+        <div class="layout-stats">
+          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${l.views}</span>
+          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${l.likes}</span>
+          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>${l.comments}</span>
+        </div>
+        <button class="coc-btn" onclick="event.stopPropagation();window.open('${l.coc}')">Abrir no CoC</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderClanGrid(){
+  document.getElementById('clan-grid').innerHTML=CLANS.map(c=>`
+    <div class="clan-card">
+      <div class="clan-header">
+        <div class="clan-badge" style="background:${c.color}22;font-size:22px;">${c.icon}</div>
+        <div class="clan-info"><h3>${c.name}</h3><div class="tag">${c.tag}</div></div>
+      </div>
+      <div class="clan-meta">
+        <span class="meta-pill th">Mín. ${c.minTH}</span>
+        <span class="meta-pill">🏆 ${c.trophies}+</span>
+        <span class="meta-pill">Nível ${c.level}</span>
+        <span class="meta-pill">👥 ${c.members}</span>
+      </div>
+      <button class="clan-btn" onclick="window.open('https://link.clashofclans.com/?action=OpenClanProfile&tag=${encodeURIComponent(c.tag)}')">Ver Clã no CoC ⚔️</button>
+    </div>
+  `).join('');
+}
+
+function renderFeatured(){
+  const feat=LAYOUTS.filter(l=>l.indicado).slice(0,3);
+  document.getElementById('home-featured').innerHTML=feat.map(l=>layoutCard(l)).join('');
+}
+
+function renderLayouts(){
+  const th=document.getElementById('th-filter').value;
+  let list=LAYOUTS;
+  if(th!=='all') list=list.filter(l=>l.th==th);
+  if(activeTag!=='all') list=list.filter(l=>l.tags.includes(activeTag));
+  document.getElementById('layout-grid').innerHTML=list.length?list.map(l=>layoutCard(l)).join(''):`<div style="color:var(--muted);font-size:14px;padding:32px 0;">Nenhum layout encontrado com esses filtros.</div>`;
+}
+
+function setTag(t){
+  activeTag=t;
+  document.querySelectorAll('.tag-pill').forEach(p=>{
+    p.classList.remove('active');
+    if(p.dataset.tag===t) p.classList.add('active');
+  });
+  renderLayouts();
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const nb=document.getElementById('nb-'+p);
+  if(nb) nb.classList.add('active');
+  window.scrollTo(0,0);
+  if(p==='enviar'){
+    document.getElementById('enviar-logged').style.display=loggedIn?'block':'none';
+    document.getElementById('enviar-logoff').style.display=loggedIn?'none':'block';
+  }
+}
+
+function showDetail(id){
+  const l=LAYOUTS.find(x=>x.id===id);
+  if(!l) return;
+  const tags=l.tags.map(t=>`<span class="ltag ${tagColor(t)}">${t.toUpperCase()}</span>`).join(' ');
+  const emoji=EMOJIS[l.id%EMOJIS.length];
+  const ind=l.indicado?`<span class="ind-badge" style="padding:4px 10px;font-size:12px;">⭐ INDICADO</span>`:'';
+  document.getElementById('detail-content').innerHTML=`
+    <div class="detail-img">${emoji}</div>
+    <div class="detail-header">
+      <div class="detail-title">${l.title}</div>
+      ${ind}
+    </div>
+    <div class="detail-body">
+      <div>
+        <div class="detail-desc">
+          <h4>Descrição</h4>
+          <p>${l.desc}</p>
+        </div>
+        <div class="detail-desc">
+          <h4>Tags</h4>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">${tags}</div>
+        </div>
+        <div class="comments-section">
+          <div class="sec-title" style="font-size:15px;margin-bottom:12px;">💬 Comentários (${l.comments})</div>
+          <div class="comment-box"><div class="comment-user">FarmKing</div><div class="comment-text">Usei em 5 guerras seguidas, funcionou demais! Anti-Blizzard é show.</div><div class="comment-date">há 2 dias</div></div>
+          <div class="comment-box"><div class="comment-user">LegendPlayer</div><div class="comment-text">Testei no ranked também, segurou bem. Vale muito o uso.</div><div class="comment-date">há 5 dias</div></div>
+          <div class="comment-input-row">
+            <input type="text" placeholder="${loggedIn?'Deixe um comentário...':'Faça login para comentar'}">
+            <button class="comment-send" onclick="showToast()">Enviar</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="detail-meta">
+          <div class="meta-row"><span class="k">Town Hall</span><span class="v">TH ${l.th}</span></div>
+          <div class="meta-row"><span class="k">Enviado por</span><span class="v">${l.author}</span></div>
+          <div class="meta-row"><span class="k">Visualizações</span><span class="v">${l.views}</span></div>
+          <div class="meta-row"><span class="k">Curtidas</span><span class="v">❤️ ${l.likes}</span></div>
+          <div class="meta-row"><span class="k">Comentários</span><span class="v">💬 ${l.comments}</span></div>
+        </div>
+        <button onclick="window.open('${l.coc}')" class="btn-main" style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>⚔️</span> Abrir no Clash of Clans
+        </button>
+        <button onclick="navigator.clipboard.writeText('${l.coc}');showToast2()" class="btn-main" style="margin-top:8px;background:var(--card2);border:1px solid var(--border2);color:var(--text);">
+          🔗 Copiar Link
+        </button>
+      </div>
+    </div>
+  `;
+  showPage('detail');
+}
+
+function openModal(){document.getElementById('modal-overlay').style.display='flex';}
+function closeModal(){document.getElementById('modal-overlay').style.display='none';}
+function closeModalOutside(e){if(e.target.id==='modal-overlay') closeModal();}
+
+function doLogin(){
+  const u=document.getElementById('inp-user').value.trim();
+  const p=document.getElementById('inp-pass').value;
+  if(!u||!p){alert('Preencha usuário e senha');return;}
+  loggedIn=true;
+  loggedUser={name:u,clash:'ClashPlayer'};
+  document.getElementById('nav-login-btn').textContent='👤 '+u;
+  document.getElementById('nav-login-btn').onclick=doLogout;
+  closeModal();
+  showToast2('Login realizado! Bem-vindo, '+u+' ⚔️');
+}
+function doLogout(){loggedIn=false;document.getElementById('nav-login-btn').textContent='Entrar';document.getElementById('nav-login-btn').onclick=openModal;}
+
+function showToast(){const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function showToast2(msg){const t=document.getElementById('toast');if(msg)t.textContent='✅ '+msg;else t.textContent='✅ Copiado!';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+renderClanGrid();
+renderFeatured();
+renderLayouts();
+</script>
+</body>
+</html>
