@@ -4,57 +4,16 @@
 <!--
   TEMPLÁRIOS - Site da Aliança de Clãs
   =====================================
-  VERSÃO: 2.0 - Visual Refactor
-  DATA: 2025
-
-  PARA A IA QUE LER ISSO:
-  ========================
-  Este é um arquivo HTML/CSS/JS de página única (SPA) sem backend ainda.
-  Todos os dados (clãs, layouts) são MOCK/PLACEHOLDER - serão substituídos
-  por Firebase Firestore + API do Clash of Clans via Vercel Functions.
-
-  ESTRUTURA DE PÁGINAS (SPA via display:none/block):
-  - #page-home     → Home com clãs e layouts em destaque
-  - #page-clans    → Lista de clãs (virá da API CoC)
-  - #page-layouts  → Catálogo de layouts com filtros por TH e tag
-  - #page-enviar   → Formulário de envio de layout (requer login)
-  - #page-detail   → Detalhe de um layout específico
-
-  SISTEMA DE AUTH (ainda mock):
-  - loggedIn: boolean global
-  - loggedUser: { name, clashName, role } - role: 'user' | 'mod' | 'admin'
-  - Login/Register via modal overlay
-  - Firebase Auth: email gerado como username@templarios.gg (invisível ao user)
-
-  FIREBASE COLLECTIONS (planejadas):
-  - users: { username, clashName, role, createdAt }
-  - clans: { tag, overrides: {desc, ordem}, fetchedFromAPI: {...} }
-  - layouts: { title, th, tags[], imgUrl, cocLink, desc, author, status: 'pending'|'approved', likes, views, createdAt }
-  - comments: { layoutId, userId, text, createdAt }
-
-  VERCEL FUNCTION PLANEJADA:
-  - /api/coc.js → proxy para api.clashofclans.com com chave segura
-    Endpoint: GET /api/coc?tag=XXXXXX
-
-  TAGS DE LAYOUT:
-  WAR, FARM, RANKED, TROPHY, UPGRADE, HYBRID
-
-  CVs SUPORTADOS:
-  TH 1-17 atualmente, estrutura preparada para TH18, TH19 e futuros
-  (dados de TH são dinâmicos, não hardcoded no filtro)
-
-  TODO BACKEND:
-  - [ ] Conectar Firebase Auth (login/register)
-  - [ ] Conectar Firestore (layouts, clãs, comentários)
-  - [ ] Vercel Function /api/coc.js para buscar clãs pela tag
-  - [ ] Sistema de moderação (aprovar/remover layouts)
-  - [ ] Upload via link (Imgur ou qualquer URL pública)
+  VERSÃO: 2.1 - Font Refactor + ClashKing API
+  - Fonts: Outfit (display) + Plus Jakarta Sans (body)
+  - API de clãs: clashking.xyz (sem auth, sem backend)
+  - Mock data de layouts mantido (Firestore futuro)
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Templários — Aliança de Clãs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -69,12 +28,10 @@
   --muted: #888884;
   --muted2: #b0b0ac;
 
-  /* accent - dourado guerra */
   --gold: #b8860b;
   --gold-bg: #fdf8ec;
   --gold-border: #e8d48a;
 
-  /* tags */
   --war: #dc2626;
   --war-bg: #fef2f2;
   --farm: #16a34a;
@@ -93,10 +50,13 @@
   --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
   --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
   --shadow-lg: 0 12px 32px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.05);
+
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
 }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   font-size: 15px;
@@ -104,7 +64,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
@@ -124,8 +83,9 @@ nav {
   height: 52px;
 }
 .logo {
-  font-family: 'DM Serif Display', serif;
-  font-size: 19px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text);
   letter-spacing: -.3px;
   cursor: pointer;
@@ -137,7 +97,7 @@ nav {
 .nav-links { display: flex; gap: 2px; }
 .nav-btn {
   background: none; border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 13.5px; font-weight: 500;
   color: var(--muted);
   padding: 5px 11px; border-radius: 7px;
@@ -148,7 +108,7 @@ nav {
 .nav-right { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
 .nav-login {
   background: var(--text); color: #fff;
-  border: none; font-family: 'DM Sans', sans-serif;
+  border: none; font-family: var(--font-body);
   font-size: 13px; font-weight: 600;
   padding: 6px 14px; border-radius: 7px;
   cursor: pointer; transition: opacity .15s;
@@ -167,7 +127,7 @@ nav {
 }
 @media(max-width: 600px) {
   .nav-btn { padding: 5px 8px; font-size: 12.5px; }
-  .logo { font-size: 16px; }
+  .logo { font-size: 17px; }
 }
 
 /* ─── PAGES ─── */
@@ -187,17 +147,22 @@ nav {
   background: var(--gold-bg); border: 1px solid var(--gold-border);
   padding: 4px 10px; border-radius: 20px;
   margin-bottom: 20px;
+  font-family: var(--font-display);
 }
 .hero h1 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(36px, 5vw, 58px);
-  font-weight: 400;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 5vw, 62px);
+  font-weight: 800;
+  line-height: 1.08;
   letter-spacing: -.5px;
   color: var(--text);
   margin-bottom: 16px;
 }
-.hero h1 em { font-style: italic; color: var(--gold); }
+.hero h1 em {
+  font-style: normal;
+  color: var(--gold);
+  font-weight: 800;
+}
 .hero-sub {
   font-size: 16px; color: var(--muted);
   max-width: 420px; margin-bottom: 36px;
@@ -207,8 +172,9 @@ nav {
   display: flex; gap: 40px; flex-wrap: wrap;
 }
 .hero-stat .n {
-  font-family: 'DM Serif Display', serif;
-  font-size: 30px; color: var(--text); line-height: 1;
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 700;
+  color: var(--text); line-height: 1;
   margin-bottom: 3px;
 }
 .hero-stat .l {
@@ -223,14 +189,14 @@ nav {
   margin-bottom: 20px;
 }
 .sec-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 22px; font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
   color: var(--text); letter-spacing: -.2px;
 }
 .sec-link {
   font-size: 13px; font-weight: 500; color: var(--muted);
   cursor: pointer; background: none; border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   transition: color .15s;
   text-decoration: underline; text-underline-offset: 3px;
 }
@@ -261,7 +227,7 @@ nav {
   justify-content: center; font-size: 20px; flex-shrink: 0;
   border: 1px solid var(--border);
 }
-.clan-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.clan-name { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; font-family: var(--font-display); }
 .clan-tag { font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 1px; }
 .clan-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 .pill {
@@ -269,18 +235,62 @@ nav {
   padding: 3px 9px; border-radius: 20px;
   background: var(--bg2); border: 1px solid var(--border);
   color: var(--text2);
+  font-family: var(--font-display);
 }
 .pill.gold { background: var(--gold-bg); border-color: var(--gold-border); color: var(--gold); font-weight: 600; }
+.clan-desc {
+  font-size: 12px; color: var(--muted);
+  line-height: 1.5; margin-bottom: 14px;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
 .clan-link-btn {
   width: 100%; padding: 7px; border-radius: 8px;
   border: 1px solid var(--border2);
   background: var(--bg2); color: var(--text2);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   font-size: 12.5px; font-weight: 600;
   cursor: pointer; transition: all .15s;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .clan-link-btn:hover { background: var(--text); color: #fff; border-color: var(--text); }
+.clan-loading {
+  font-size: 12px; color: var(--muted2);
+  text-align: center; padding: 4px 0;
+  font-style: italic;
+}
+.clan-live-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; color: #16a34a;
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  padding: 1px 6px; border-radius: 10px;
+  margin-left: 6px; vertical-align: middle;
+}
+.clan-live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+}
+
+/* ─── API STATUS BANNER ─── */
+.api-banner {
+  display: none;
+  padding: 12px 16px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13.5px; color: var(--muted);
+  margin-bottom: 24px;
+  align-items: center; gap: 10px;
+}
+.api-banner.visible { display: flex; }
+.api-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--border2);
+  border-top-color: var(--text2);
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ─── FILTER BAR ─── */
 .filter-bar {
@@ -290,11 +300,11 @@ nav {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); margin-bottom: 24px;
 }
-.filter-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.filter-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; font-family: var(--font-display); }
 .filter-sep { width: 1px; height: 18px; background: var(--border2); }
 .filter-select {
   background: var(--bg); border: 1px solid var(--border2);
-  color: var(--text); font-family: 'DM Sans', sans-serif;
+  color: var(--text); font-family: var(--font-body);
   font-size: 13px; font-weight: 500;
   padding: 5px 10px; border-radius: 7px;
   cursor: pointer; outline: none;
@@ -307,7 +317,7 @@ nav {
   border: 1px solid var(--border2);
   background: var(--bg); color: var(--muted);
   cursor: pointer; transition: all .15s;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   letter-spacing: .2px; text-transform: uppercase;
 }
 .tag-btn:hover { color: var(--text); border-color: var(--border2); }
@@ -353,18 +363,21 @@ nav {
   background: rgba(0,0,0,.7); color: #fff;
   padding: 3px 7px; border-radius: 5px;
   backdrop-filter: blur(4px);
+  font-family: var(--font-display);
 }
 .feat-badge {
   font-size: 10px; font-weight: 700;
   background: var(--gold); color: #fff;
   padding: 3px 8px; border-radius: 5px;
   letter-spacing: .3px; text-transform: uppercase;
+  font-family: var(--font-display);
 }
 .layout-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
 .layout-title {
-  font-size: 14.5px; font-weight: 600; color: var(--text);
+  font-size: 14.5px; font-weight: 700; color: var(--text);
   margin-bottom: 5px; line-height: 1.3;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-display);
 }
 .layout-desc {
   font-size: 12.5px; color: var(--muted);
@@ -377,6 +390,7 @@ nav {
   font-size: 10.5px; font-weight: 700;
   padding: 2px 8px; border-radius: 4px;
   letter-spacing: .3px; text-transform: uppercase;
+  font-family: var(--font-display);
 }
 .ltag-war { background: var(--war-bg); color: var(--war); }
 .ltag-farm { background: var(--farm-bg); color: var(--farm); }
@@ -392,7 +406,7 @@ nav {
 .lmeta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
 .coc-btn {
   background: var(--text); color: #fff;
-  border: none; font-family: 'DM Sans', sans-serif;
+  border: none; font-family: var(--font-display);
   font-size: 12px; font-weight: 600;
   padding: 5px 11px; border-radius: 7px;
   cursor: pointer; transition: opacity .15s;
@@ -412,10 +426,10 @@ nav {
 }
 .detail-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 1; }
 .detail-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 28px; font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 800;
   color: var(--text); margin-bottom: 8px;
-  letter-spacing: -.2px;
+  letter-spacing: -.3px;
 }
 .detail-author { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
 .detail-author strong { color: var(--text2); }
@@ -424,12 +438,12 @@ nav {
   font-size: 11px; font-weight: 700; letter-spacing: .5px;
   text-transform: uppercase; color: var(--muted);
   margin-bottom: 8px;
+  font-family: var(--font-display);
 }
 .detail-desc-text {
   font-size: 14.5px; color: var(--text2);
   line-height: 1.7; margin-bottom: 28px;
 }
-/* sidebar */
 .detail-sidebar { }
 .detail-meta-card {
   background: var(--bg2); border: 1px solid var(--border);
@@ -443,12 +457,12 @@ nav {
 }
 .detail-meta-row:last-child { border-bottom: none; }
 .detail-meta-row .k { color: var(--muted); font-weight: 400; }
-.detail-meta-row .v { color: var(--text); font-weight: 600; }
+.detail-meta-row .v { color: var(--text); font-weight: 700; font-family: var(--font-display); }
 .btn-primary {
   width: 100%; padding: 10px;
   background: var(--text); color: #fff;
   border: none; border-radius: var(--radius);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px; font-weight: 600;
   cursor: pointer; transition: opacity .15s;
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -459,19 +473,18 @@ nav {
   width: 100%; padding: 9px;
   background: var(--bg); color: var(--text2);
   border: 1px solid var(--border2); border-radius: var(--radius);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 13.5px; font-weight: 600;
   cursor: pointer; transition: all .15s;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-bottom: 8px;
 }
 .btn-secondary:hover { background: var(--bg2); }
-/* back btn */
 .back-btn {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 13.5px; font-weight: 500; color: var(--muted);
   cursor: pointer; background: none; border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
   margin-bottom: 24px;
   transition: color .15s;
 }
@@ -480,9 +493,9 @@ nav {
 /* ─── COMMENTS ─── */
 .comments-wrap { margin-top: 32px; }
 .comments-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 20px; color: var(--text);
-  margin-bottom: 20px; font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 700; color: var(--text);
+  margin-bottom: 20px;
 }
 .comment {
   padding: 14px 0; border-bottom: 1px solid var(--border);
@@ -494,8 +507,9 @@ nav {
   background: var(--bg3); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; color: var(--muted);
+  font-family: var(--font-display);
 }
-.comment-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.comment-name { font-size: 13.5px; font-weight: 600; color: var(--text); font-family: var(--font-display); }
 .comment-date { font-size: 12px; color: var(--muted2); margin-left: auto; }
 .comment-text { font-size: 13.5px; color: var(--text2); line-height: 1.5; }
 .comment-input-wrap {
@@ -504,7 +518,7 @@ nav {
 .comment-input {
   flex: 1; padding: 9px 13px;
   border: 1px solid var(--border2); border-radius: var(--radius);
-  background: var(--bg); font-family: 'DM Sans', sans-serif;
+  background: var(--bg); font-family: var(--font-body);
   font-size: 13.5px; color: var(--text); outline: none;
   transition: border-color .15s;
 }
@@ -512,7 +526,7 @@ nav {
 .comment-send {
   padding: 9px 16px; background: var(--text); color: #fff;
   border: none; border-radius: var(--radius);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 13px; font-weight: 600;
   cursor: pointer; transition: opacity .15s;
   white-space: nowrap;
@@ -522,9 +536,10 @@ nav {
 /* ─── ENVIAR LAYOUT ─── */
 .form-wrap { max-width: 600px; }
 .form-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 28px; color: var(--text);
-  margin-bottom: 6px; font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 800; color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -.3px;
 }
 .form-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
 .field { margin-bottom: 18px; }
@@ -532,12 +547,13 @@ nav {
   display: block; font-size: 12px; font-weight: 700;
   letter-spacing: .4px; text-transform: uppercase;
   color: var(--muted); margin-bottom: 7px;
+  font-family: var(--font-display);
 }
 .field input, .field textarea, .field select {
   width: 100%; padding: 9px 13px;
   border: 1px solid var(--border2); border-radius: var(--radius);
   background: var(--bg); color: var(--text);
-  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  font-family: var(--font-body); font-size: 14px;
   outline: none; transition: border-color .15s;
 }
 .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--text2); }
@@ -547,7 +563,7 @@ nav {
   padding: 5px 12px; border-radius: 20px;
   border: 1px solid var(--border2);
   background: var(--bg); color: var(--muted);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 12.5px; font-weight: 600;
   cursor: pointer; transition: all .15s;
   letter-spacing: .2px; text-transform: uppercase;
@@ -563,7 +579,7 @@ nav {
   padding: 11px 28px;
   background: var(--text); color: #fff;
   border: none; border-radius: var(--radius);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px; font-weight: 700;
   cursor: pointer; transition: opacity .15s;
   margin-top: 8px;
@@ -597,16 +613,16 @@ nav {
 }
 @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
 .modal-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 22px; color: var(--text);
-  margin-bottom: 5px; font-weight: 400;
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 800; color: var(--text);
+  margin-bottom: 5px; letter-spacing: -.3px;
 }
 .modal-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 24px; }
 .modal-tabs { display: flex; gap: 2px; margin-bottom: 24px; background: var(--bg2); border-radius: 8px; padding: 3px; }
 .modal-tab {
   flex: 1; padding: 6px; border-radius: 6px;
   border: none; background: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 13px; font-weight: 600; color: var(--muted);
   cursor: pointer; transition: all .15s;
 }
@@ -616,12 +632,13 @@ nav {
   display: block; font-size: 11.5px; font-weight: 700;
   letter-spacing: .4px; text-transform: uppercase;
   color: var(--muted); margin-bottom: 6px;
+  font-family: var(--font-display);
 }
 .modal-field input {
   width: 100%; padding: 9px 12px;
   border: 1px solid var(--border2); border-radius: 8px;
   background: var(--bg2); color: var(--text);
-  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  font-family: var(--font-body); font-size: 14px;
   outline: none; transition: border-color .15s;
 }
 .modal-field input:focus { border-color: var(--text2); background: var(--bg); }
@@ -630,7 +647,7 @@ nav {
   width: 100%; padding: 10px;
   background: var(--text); color: #fff;
   border: none; border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-display);
   font-size: 14px; font-weight: 700;
   cursor: pointer; transition: opacity .15s;
   margin-top: 8px;
@@ -646,7 +663,7 @@ nav {
   background: none; border: none;
   font-size: 18px; color: var(--muted);
   cursor: pointer; line-height: 1;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body);
 }
 .modal-close:hover { color: var(--text); }
 .modal-header-row { display: flex; align-items: flex-start; position: relative; margin-bottom: 5px; }
@@ -660,6 +677,7 @@ nav {
   box-shadow: var(--shadow-lg);
   opacity: 0; transition: all .25s;
   pointer-events: none; z-index: 300; white-space: nowrap;
+  font-family: var(--font-display);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -677,6 +695,7 @@ nav {
   font-size: 13px; color: var(--gold);
   font-weight: 600; margin-bottom: 24px;
   display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
 }
 .pending-tag {
   background: #fef9c3; color: #a16207;
@@ -684,6 +703,7 @@ nav {
   font-size: 10.5px; font-weight: 700;
   padding: 2px 7px; border-radius: 4px;
   text-transform: uppercase; letter-spacing: .3px;
+  font-family: var(--font-display);
 }
 </style>
 </head>
@@ -700,9 +720,7 @@ nav {
       <button class="nav-btn" id="nb-enviar" onclick="showPage('enviar')">Enviar</button>
     </div>
     <div class="nav-right">
-      <!-- Estado deslogado -->
       <button class="nav-login" id="btn-login" onclick="openModal('login')">Entrar</button>
-      <!-- Estado logado (oculto inicialmente) -->
       <div class="nav-user" id="nav-user-info" style="display:none;">
         <div class="nav-avatar" id="nav-avatar" onclick="doLogout()" title="Clique para sair">?</div>
         <span id="nav-username" style="font-size:13.5px;"></span>
@@ -711,12 +729,8 @@ nav {
   </div>
 </nav>
 
-<!-- ══════════════════════════════════
-     PAGE: HOME
-══════════════════════════════════ -->
+<!-- PAGE: HOME -->
 <div class="page active" id="page-home">
-
-  <!-- HERO -->
   <div class="hero">
     <div class="hero-eyebrow">⚔️ Aliança Templários</div>
     <h1>Dominar a guerra<br>é uma <em>tradição.</em></h1>
@@ -728,7 +742,6 @@ nav {
     </div>
   </div>
 
-  <!-- CLÃS EM DESTAQUE -->
   <div class="section">
     <div class="sec-header">
       <div class="sec-title">Nossos Clãs</div>
@@ -737,7 +750,6 @@ nav {
     <div class="clan-grid" id="home-clans"></div>
   </div>
 
-  <!-- LAYOUTS EM DESTAQUE -->
   <div class="section">
     <div class="sec-header">
       <div class="sec-title">Layouts em Destaque</div>
@@ -745,82 +757,61 @@ nav {
     </div>
     <div class="layout-grid" id="home-layouts"></div>
   </div>
-
 </div>
 
-<!-- ══════════════════════════════════
-     PAGE: CLANS
-══════════════════════════════════ -->
+<!-- PAGE: CLANS -->
 <div class="page" id="page-clans">
   <div style="margin-bottom:32px;">
     <div class="sec-title" style="margin-bottom:6px;">Nossos Clãs</div>
-    <p style="color:var(--muted);font-size:14px;">Encontre o clã certo para seu estilo de jogo. Dados via API oficial do CoC.</p>
+    <p style="color:var(--muted);font-size:14px;">Encontre o clã certo para seu estilo de jogo. Dados via API do Clash of Clans.</p>
   </div>
-  <!-- Banner de loading da API (visível quando buscar) -->
-  <div id="api-loading" style="display:none;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;color:var(--muted);margin-bottom:24px;">
-    ⏳ Buscando dados dos clãs na API do Clash of Clans...
+  <div class="api-banner" id="api-loading">
+    <div class="api-spinner"></div>
+    Buscando dados dos clãs na API...
   </div>
   <div class="clan-grid" id="clans-grid"></div>
 </div>
 
-<!-- ══════════════════════════════════
-     PAGE: LAYOUTS
-══════════════════════════════════ -->
+<!-- PAGE: LAYOUTS -->
 <div class="page" id="page-layouts">
   <div style="margin-bottom:24px;">
     <div class="sec-title" style="margin-bottom:6px;">Layouts</div>
     <p style="color:var(--muted);font-size:14px;">Bases testadas pela comunidade. Filtre por CV e tipo.</p>
   </div>
-
-  <!-- FILTROS -->
   <div class="filter-bar">
     <span class="filter-label">CV</span>
-    <select class="filter-select" id="th-filter" onchange="renderLayouts()">
-      <!-- Opções geradas dinamicamente pelo JS — preparado para TH18, TH19... -->
-    </select>
+    <select class="filter-select" id="th-filter" onchange="renderLayouts()"></select>
     <div class="filter-sep"></div>
     <span class="filter-label">Tag</span>
     <div class="tag-btns" id="tag-btns"></div>
   </div>
-
   <div class="layout-grid" id="layout-grid"></div>
 </div>
 
-<!-- ══════════════════════════════════
-     PAGE: DETAIL
-══════════════════════════════════ -->
+<!-- PAGE: DETAIL -->
 <div class="page" id="page-detail">
   <button class="back-btn" onclick="showPage('layouts')">← Voltar para layouts</button>
   <div id="detail-content"></div>
 </div>
 
-<!-- ══════════════════════════════════
-     PAGE: ENVIAR
-══════════════════════════════════ -->
+<!-- PAGE: ENVIAR -->
 <div class="page" id="page-enviar">
-
-  <!-- Se não logado -->
   <div id="enviar-logoff" class="login-prompt">
     <div style="font-size:36px;margin-bottom:16px;">🔒</div>
     <p><strong>Faça login</strong> para enviar um layout para a comunidade.</p>
     <button class="nav-login" onclick="openModal('login')">Entrar / Criar conta</button>
   </div>
-
-  <!-- Se logado -->
   <div id="enviar-logado" style="display:none;">
     <div class="form-wrap">
       <div class="form-title">Enviar Layout</div>
       <p class="form-sub">Seu layout será revisado por um moderador antes de aparecer para todos.</p>
-
       <div class="field">
         <label>Título</label>
         <input type="text" id="f-title" placeholder="Ex: Anti-3 Estrelas TH17 War">
       </div>
       <div class="field">
         <label>Town Hall (CV)</label>
-        <select id="f-th">
-          <!-- Gerado dinamicamente -->
-        </select>
+        <select id="f-th"></select>
       </div>
       <div class="field">
         <label>Tags</label>
@@ -841,12 +832,9 @@ nav {
       <button class="btn-submit" onclick="submitLayout()">Enviar para revisão</button>
     </div>
   </div>
-
 </div>
 
-<!-- ══════════════════════════════════
-     MODAL LOGIN / REGISTER
-══════════════════════════════════ -->
+<!-- MODAL LOGIN / REGISTER -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <div class="modal-header-row">
@@ -856,14 +844,10 @@ nav {
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-
-    <!-- TABS -->
     <div class="modal-tabs">
       <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
       <button class="modal-tab" id="tab-register" onclick="switchTab('register')">Criar conta</button>
     </div>
-
-    <!-- LOGIN -->
     <div id="form-login">
       <div class="modal-field">
         <label>Usuário</label>
@@ -878,8 +862,6 @@ nav {
         Esqueceu a senha? <a onclick="showForgot()">Fala com um admin no grupo</a>
       </div>
     </div>
-
-    <!-- REGISTER -->
     <div id="form-register" style="display:none;">
       <div class="modal-field">
         <label>Usuário</label>
@@ -897,7 +879,6 @@ nav {
       </div>
       <button class="modal-btn" onclick="doRegister()">Criar conta</button>
     </div>
-
   </div>
 </div>
 
@@ -906,26 +887,31 @@ nav {
 
 <script>
 // ═══════════════════════════════════════════════════
-// DADOS MOCK — serão substituídos por Firestore + API CoC
+// DADOS — layouts mock (Firestore futuro), clãs via API
 // ═══════════════════════════════════════════════════
 
-// CVs suportados — adicionar novos aqui quando sair TH18, TH19...
-// BASTA adicionar ao array, o resto é automático
-const TH_LIST = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-// TH18 já está incluído — quando sair é só adicionar 19 aqui
-
+const TH_LIST = [9,10,11,12,13,14,15,16,17,18];
 const TAGS = ['WAR','FARM','RANKED','TROPHY','UPGRADE','HYBRID'];
 const TAG_CLASS = { WAR:'war', FARM:'farm', RANKED:'ranked', TROPHY:'trophy', UPGRADE:'upgrade', HYBRID:'hybrid' };
 
-// Clãs mock — virão do Firestore + API CoC via /api/coc?tag=XXXX
-const CLANS = [
-  { name:'Templários', tag:'#XXXXXX', level:15, members:50, minTH:14, trophies:3000, icon:'⚔️' },
-  { name:'Templários 2', tag:'#YYYYYY', level:12, members:48, minTH:12, trophies:2500, icon:'🛡️' },
-  { name:'Templários 3', tag:'#ZZZZZZ', level:10, members:45, minTH:10, trophies:2000, icon:'🏹' },
-  { name:'Templários War', tag:'#WWWWWW', level:18, members:50, minTH:16, trophies:4000, icon:'🔥' },
+// ⚠️ SUBSTITUA as tags pelos seus clãs reais (#XXXXXXXX)
+const CLANS_CONFIG = [
+  { tag:'#2JQVVGUPY', icon:'⚔️', minTH:14 },
+  { tag:'#YYYYYY', icon:'🛡️', minTH:12 },
+  { tag:'#ZZZZZZ', icon:'🏹', minTH:10 },
+  { tag:'#WWWWWW', icon:'🔥', minTH:16 },
 ];
 
-// Layouts mock — virão do Firestore
+// Dados mock enquanto API não carrega (fallback)
+const CLANS_FALLBACK = [
+  { name:'Templários',     tag:'#2JQVVGUPY', level:15, members:50, minTH:14, trophies:3000, icon:'⚔️', description:'' },
+  { name:'Templários 2',   tag:'#YYYYYY', level:12, members:48, minTH:12, trophies:2500, icon:'🛡️', description:'' },
+  { name:'Templários 3',   tag:'#ZZZZZZ', level:10, members:45, minTH:10, trophies:2000, icon:'🏹', description:'' },
+  { name:'Templários War', tag:'#WWWWWW', level:18, members:50, minTH:16, trophies:4000, icon:'🔥', description:'' },
+];
+
+let CLANS = [...CLANS_FALLBACK]; // começa com fallback, substituído pela API
+
 const LAYOUTS = [
   { id:1, title:'Anti-3 Estrelas TH17', th:17, tags:['WAR','RANKED'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base anti-3 estrelas focada em guerra. Excelente contra Blizzard e Hydra.', author:'TmplAdmin', likes:42, views:318, comments:8, featured:true, status:'approved' },
   { id:2, title:'Farm Tranquilo TH16', th:16, tags:['FARM'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base de farm para proteger recursos. Perfeita para ficar offline sem perder ouro.', author:'GuerreiroZ', likes:31, views:201, comments:4, featured:false, status:'approved' },
@@ -939,9 +925,56 @@ const LAYOUTS = [
 // ESTADO GLOBAL
 // ═══════════════════════════════════════════════════
 let loggedIn = false;
-let loggedUser = null; // { username, clashName, role }
+let loggedUser = null;
 let activeTag = 'ALL';
 let activeTab = 'login';
+
+// ═══════════════════════════════════════════════════
+// API CLASHKING — busca dados reais dos clãs
+// ═══════════════════════════════════════════════════
+async function fetchClan(tag) {
+  const t = tag.replace('#', '%23');
+  const res = await fetch(`https://api.clashking.xyz/clan/${t}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function loadClansFromAPI() {
+  const banner = document.getElementById('api-loading');
+  banner.classList.add('visible');
+
+  const results = await Promise.allSettled(
+    CLANS_CONFIG.map(c => fetchClan(c.tag))
+  );
+
+  const enriched = CLANS_CONFIG.map((cfg, i) => {
+    if (results[i].status === 'fulfilled') {
+      const d = results[i].value;
+      return {
+        tag:         cfg.tag,
+        icon:        cfg.icon,
+        minTH:       cfg.minTH,
+        name:        d.name          || cfg.tag,
+        level:       d.clanLevel     || 0,
+        members:     d.members       || 0,
+        trophies:    d.requiredTrophies || 0,
+        description: d.description   || '',
+        warLeague:   d.warLeague?.name || '',
+        _live:       true,
+      };
+    }
+    // fallback: usa dados mock do mesmo índice
+    return CLANS_FALLBACK[i] || { tag: cfg.tag, icon: cfg.icon, minTH: cfg.minTH, name: cfg.tag, level:0, members:0, trophies:0, description:'', warLeague:'' };
+  });
+
+  CLANS = enriched;
+  banner.classList.remove('visible');
+
+  // Re-renderiza com dados reais
+  renderHomeClans();
+  renderClansPage();
+  renderStats();
+}
 
 // ═══════════════════════════════════════════════════
 // INIT
@@ -955,18 +988,17 @@ function init() {
   renderHomeLayouts();
   renderClansPage();
   renderLayouts();
+  // Busca dados reais da API em background
+  loadClansFromAPI();
 }
 
 // ═══════════════════════════════════════════════════
-// BUILD DINÂMICO — TH e TAGS
+// BUILD DINÂMICO
 // ═══════════════════════════════════════════════════
 function buildThSelects() {
-  // Filtro de layouts
   const sel = document.getElementById('th-filter');
   sel.innerHTML = '<option value="all">Todos os CVs</option>' +
     [...TH_LIST].reverse().map(n => `<option value="${n}">CV ${n}</option>`).join('');
-
-  // Select do formulário de envio
   const fSel = document.getElementById('f-th');
   fSel.innerHTML = [...TH_LIST].reverse().map(n => `<option value="${n}">CV ${n}</option>`).join('');
 }
@@ -990,30 +1022,40 @@ function buildTagChecks() {
 function renderStats() {
   document.getElementById('stat-clans').textContent = CLANS.length;
   document.getElementById('stat-layouts').textContent = LAYOUTS.filter(l => l.status === 'approved').length;
-  // Total de membros somando clãs (virá da API)
-  const total = CLANS.reduce((a, c) => a + c.members, 0);
-  document.getElementById('stat-members').textContent = total + '+';
+  const total = CLANS.reduce((a, c) => a + (c.members || 0), 0);
+  document.getElementById('stat-members').textContent = total > 0 ? total + '+' : '—';
 }
 
 // ═══════════════════════════════════════════════════
 // CLAN CARDS
 // ═══════════════════════════════════════════════════
 function clanCard(c) {
+  const liveBadge = c._live
+    ? `<span class="clan-live-badge"><span class="clan-live-dot"></span>Ao vivo</span>`
+    : '';
+  const desc = c.description
+    ? `<div class="clan-desc">${c.description}</div>`
+    : '';
+  const warLeague = c.warLeague
+    ? `<span class="pill">⚔️ ${c.warLeague}</span>`
+    : '';
   return `
     <div class="clan-card">
       <div class="clan-top">
         <div class="clan-icon">${c.icon}</div>
         <div>
-          <div class="clan-name">${c.name}</div>
+          <div class="clan-name">${c.name}${liveBadge}</div>
           <div class="clan-tag">${c.tag}</div>
         </div>
       </div>
       <div class="clan-pills">
         <span class="pill gold">Mín. CV ${c.minTH}</span>
-        <span class="pill">🏆 ${c.trophies}+</span>
-        <span class="pill">Nível ${c.level}</span>
-        <span class="pill">👥 ${c.members}</span>
+        <span class="pill">🏆 ${c.trophies || '—'}+</span>
+        <span class="pill">Nível ${c.level || '—'}</span>
+        <span class="pill">👥 ${c.members || '—'}/50</span>
+        ${warLeague}
       </div>
+      ${desc}
       <button class="clan-link-btn" onclick="window.open('https://link.clashofclans.com/?action=OpenClanProfile&tag=${encodeURIComponent(c.tag)}')">
         ⚔️ Ver no Clash of Clans
       </button>
@@ -1100,9 +1142,7 @@ function showDetail(id) {
   const l = LAYOUTS.find(x => x.id === id);
   if (!l) return;
   const tags = l.tags.map(t => `<span class="ltag ltag-${TAG_CLASS[t]}" style="font-size:12px;padding:3px 10px;">${t}</span>`).join('');
-  const imgContent = l.imgUrl
-    ? `<img src="${l.imgUrl}" alt="${l.title}">`
-    : '🏰';
+  const imgContent = l.imgUrl ? `<img src="${l.imgUrl}" alt="${l.title}">` : '🏰';
 
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-layout">
@@ -1113,8 +1153,6 @@ function showDetail(id) {
         <div class="detail-tags">${tags}</div>
         <div class="detail-desc-label">Sobre este layout</div>
         <div class="detail-desc-text">${l.desc}</div>
-
-        <!-- COMENTÁRIOS -->
         <div class="comments-wrap">
           <div class="comments-title">Comentários (${l.comments})</div>
           <div class="comment">
@@ -1139,7 +1177,6 @@ function showDetail(id) {
           </div>
         </div>
       </div>
-
       <div class="detail-sidebar">
         <div class="detail-meta-card">
           <div class="detail-meta-row"><span class="k">Town Hall</span><span class="v">CV ${l.th}</span></div>
@@ -1173,12 +1210,10 @@ function toggleTagCheck(el, tag) {
 function submitLayout() {
   const title = document.getElementById('f-title').value.trim();
   const th = document.getElementById('f-th').value;
-  const img = document.getElementById('f-img').value.trim();
   const coc = document.getElementById('f-coc').value.trim();
   const desc = document.getElementById('f-desc').value.trim();
   if (!title || !th || !coc || !desc) { showToast('Preencha todos os campos obrigatórios'); return; }
   if (selectedTags.length === 0) { showToast('Selecione pelo menos uma tag'); return; }
-  // TODO: salvar no Firestore com status 'pending'
   showToast('Layout enviado! Aguardando aprovação do moderador.');
 }
 
@@ -1192,7 +1227,6 @@ function showPage(p) {
   const nb = document.getElementById('nb-' + p);
   if (nb) nb.classList.add('active');
   window.scrollTo(0, 0);
-  // Mostra/oculta forms de envio baseado em login
   if (p === 'enviar') {
     document.getElementById('enviar-logoff').style.display = loggedIn ? 'none' : 'block';
     document.getElementById('enviar-logado').style.display = loggedIn ? 'block' : 'none';
@@ -1200,13 +1234,12 @@ function showPage(p) {
 }
 
 // ═══════════════════════════════════════════════════
-// AUTH (mock — será substituído por Firebase Auth)
+// AUTH (mock)
 // ═══════════════════════════════════════════════════
 function doLogin() {
   const u = document.getElementById('inp-user').value.trim();
   const p = document.getElementById('inp-pass').value;
   if (!u || !p) { showToast('Preencha usuário e senha'); return; }
-  // TODO: Firebase Auth — email gerado como u + '@templarios.gg'
   loggedIn = true;
   loggedUser = { username: u, clashName: 'ClashPlayer', role: 'user' };
   updateNavAuth();
@@ -1219,8 +1252,6 @@ function doRegister() {
   const clash = document.getElementById('inp-reg-clash').value.trim();
   const p = document.getElementById('inp-reg-pass').value;
   if (!u || !clash || !p) { showToast('Preencha todos os campos'); return; }
-  // TODO: Firebase Auth createUserWithEmailAndPassword(u + '@templarios.gg', p)
-  // + salvar em Firestore: users/{uid} = { username: u, clashName: clash, role: 'user' }
   loggedIn = true;
   loggedUser = { username: u, clashName: clash, role: 'user' };
   updateNavAuth();
@@ -1276,7 +1307,7 @@ function showToast(msg) {
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ─── START ───
+// START
 init();
 </script>
 </body>
