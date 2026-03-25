@@ -4,10 +4,40 @@
 <!--
   TEMPLÁRIOS - Site da Aliança de Clãs
   =====================================
-  VERSÃO: 2.1 - Font Refactor + ClashKing API
-  - Fonts: Outfit (display) + Plus Jakarta Sans (body)
-  - API de clãs: clashking.xyz (sem auth, sem backend)
-  - Mock data de layouts mantido (Firestore futuro)
+  VERSÃO: 2.2 - API Oficial CoC + Firebase Config
+
+  MUDANÇAS NESTA VERSÃO:
+  - API de clãs: proxy.royaleapi.dev (IP fixo 45.79.218.79, sem backend necessário)
+  - Chave da API do CoC configurada com IP do proxy RoyaleAPI
+  - Tags reais dos clãs Templários plugadas (#GR9J9U0, #G90PPRYG, #2RPYGGCU8, #2JQVVGUPY, #2JYCGUJQ8)
+  - Dados puxados da API: nível, membros, troféus mínimos, liga de guerra, streak
+  - Firebase config real adicionada (auth ainda mock — TODO conectar)
+  - Fallback elegante se API falhar
+
+  API DO COC:
+  - Proxy: https://proxy.royaleapi.dev/v1/clans/{tag}
+  - Chave: eyJ0eXAi... (cadastrada com IP 45.79.218.79)
+  - Não precisa de backend — chamada direta do frontend via proxy
+
+  FIREBASE (configurado, auth ainda mock):
+  - Project: templarios-12195
+  - Auth: TODO — Firebase Auth com email fake username@templarios.gg
+  - Firestore: TODO — collections: users, layouts, comments
+  - Storage: não usado (imagens via URL externa)
+
+  CLÃS CONFIGURADOS:
+  - Templários   #GR9J9U0
+  - Templários II  #G90PPRYG
+  - Templários III #2RPYGGCU8
+  - Templários IV  #2JQVVGUPY
+  - Templários V   #2JYCGUJQ8
+  - Templários VI  (tag pendente — adicionar em CLANS_CONFIG)
+  - TP 999       (tag pendente — adicionar em CLANS_CONFIG)
+
+  TODO BACKEND:
+  - [ ] Firebase Auth (login/register real)
+  - [ ] Firestore (layouts, comentários, moderação)
+  - [ ] Adicionar tags dos clãs VI e 999
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -894,23 +924,50 @@ const TH_LIST = [9,10,11,12,13,14,15,16,17,18];
 const TAGS = ['WAR','FARM','RANKED','TROPHY','UPGRADE','HYBRID'];
 const TAG_CLASS = { WAR:'war', FARM:'farm', RANKED:'ranked', TROPHY:'trophy', UPGRADE:'upgrade', HYBRID:'hybrid' };
 
-// ⚠️ SUBSTITUA as tags pelos seus clãs reais (#XXXXXXXX)
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════
+// Auth e Firestore ainda mock — config real aqui pra quando conectar
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAz5pER3LbB0m8TN-8seJ0-QEdvIC3bsow",
+  authDomain: "templarios-12195.firebaseapp.com",
+  projectId: "templarios-12195",
+  storageBucket: "templarios-12195.firebasestorage.app",
+  messagingSenderId: "980758186678",
+  appId: "1:980758186678:web:07c125ccfc43e5f359f417"
+};
+// TODO: import { initializeApp } from "firebase/app" quando migrar pra módulos
+
+// ═══════════════════════════════════════════════════
+// API DO CLASH OF CLANS — proxy RoyaleAPI (IP fixo)
+// ═══════════════════════════════════════════════════
+// Proxy com IP fixo 45.79.218.79 — cadastrado na chave da API do CoC
+// Não precisa de backend, chamada direta do frontend
+const COC_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjI4YTMxOGY3LTAwMDAtYTFlYi03ZmExLTJjNzQzM2M2Y2NhNSJ9.eyJpc3MiOiJzdXBlcmNlbGwiLCJhdWQiOiJzdXBlcmNlbGw6Z2FtZWFwaSIsImp0aSI6ImQwMGVmMGNjLWY4YTYtNDhlNS1iMDAwLTgzNzJiMjYyOGI4ZSIsImlhdCI6MTc3NDQ3NzY2OSwic3ViIjoiZGV2ZWxvcGVyL2Y3NGUwOWIyLTI5NDYtOGQ4OS04YTFmLTJiNDBlYzY4YjI0MiIsInNjb3BlcyI6WyJjbGFzaCJdLCJsaW1pdHMiOlt7InRpZXIiOiJkZXZlbG9wZXIvc2lsdmVyIiwidHlwZSI6InRocm90dGxpbmcifSx7ImNpZHJzIjpbIjQ1Ljc5LjIxOC43OSJdLCJ0eXBlIjoiY2xpZW50In1dfQ.nL5RumbJCizRNzhpMtRaNAEZMHJ-0yqQnNxmyliuz1VieTZQO4WnOo6bfFulQRYgAfBurviwru_5_Mm-x4LZUQ';
+const COC_PROXY   = 'https://proxy.royaleapi.dev/v1';
+
+// Clãs da aliança Templários
+// Para adicionar novos clãs: incluir objeto { tag, icon } neste array
+// Os dados (nome, nível, membros etc) vêm automaticamente da API
 const CLANS_CONFIG = [
-  { tag:'#2JQVVGUPY', icon:'⚔️', minTH:14 },
-  { tag:'#YYYYYY', icon:'🛡️', minTH:12 },
-  { tag:'#ZZZZZZ', icon:'🏹', minTH:10 },
-  { tag:'#WWWWWW', icon:'🔥', minTH:16 },
+  { tag:'#GR9J9U0',    icon:'⚔️'  },  // Templários
+  { tag:'#G90PPRYG',   icon:'🛡️'  },  // Templários II
+  { tag:'#2RPYGGCU8',  icon:'🏹'  },  // Templários III
+  { tag:'#2JQVVGUPY',  icon:'🔱'  },  // Templários IV
+  { tag:'#2JYCGUJQ8',  icon:'🔥'  },  // Templários V
+  // { tag:'#XXXXXX', icon:'💎' }, // Templários VI — adicionar tag aqui
+  // { tag:'#YYYYYY', icon:'👑' }, // TP 999        — adicionar tag aqui
 ];
 
-// Dados mock enquanto API não carrega (fallback)
-const CLANS_FALLBACK = [
-  { name:'Templários',     tag:'#2JQVVGUPY', level:15, members:50, minTH:14, trophies:3000, icon:'⚔️', description:'' },
-  { name:'Templários 2',   tag:'#YYYYYY', level:12, members:48, minTH:12, trophies:2500, icon:'🛡️', description:'' },
-  { name:'Templários 3',   tag:'#ZZZZZZ', level:10, members:45, minTH:10, trophies:2000, icon:'🏹', description:'' },
-  { name:'Templários War', tag:'#WWWWWW', level:18, members:50, minTH:16, trophies:4000, icon:'🔥', description:'' },
-];
-
-let CLANS = [...CLANS_FALLBACK]; // começa com fallback, substituído pela API
+// Fallback enquanto API carrega (dados mínimos só com a tag)
+// Será sobrescrito pelos dados reais da API
+let CLANS = CLANS_CONFIG.map(c => ({
+  tag: c.tag, icon: c.icon,
+  name: c.tag, level: 0, members: 0,
+  trophies: 0, description: '', warLeague: '',
+  warWins: 0, warStreak: 0, isWarring: false,
+  _live: false,
+}));
 
 const LAYOUTS = [
   { id:1, title:'Anti-3 Estrelas TH17', th:17, tags:['WAR','RANKED'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base anti-3 estrelas focada em guerra. Excelente contra Blizzard e Hydra.', author:'TmplAdmin', likes:42, views:318, comments:8, featured:true, status:'approved' },
@@ -930,15 +987,23 @@ let activeTag = 'ALL';
 let activeTab = 'login';
 
 // ═══════════════════════════════════════════════════
-// API CLASHKING — busca dados reais dos clãs
+// API CLASH OF CLANS — fetch via proxy RoyaleAPI
 // ═══════════════════════════════════════════════════
+
+// Busca dados completos de um clã pelo tag
 async function fetchClan(tag) {
-  const t = tag.replace('#', '%23');
-  const res = await fetch(`https://api.clashking.xyz/clan/${t}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const encoded = encodeURIComponent(tag);
+  const res = await fetch(`${COC_PROXY}/clans/${encoded}`, {
+    headers: {
+      'Authorization': `Bearer ${COC_API_KEY}`,
+      'Accept': 'application/json',
+    }
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} para tag ${tag}`);
   return res.json();
 }
 
+// Carrega todos os clãs em paralelo e atualiza a UI
 async function loadClansFromAPI() {
   const banner = document.getElementById('api-loading');
   banner.classList.add('visible');
@@ -947,30 +1012,50 @@ async function loadClansFromAPI() {
     CLANS_CONFIG.map(c => fetchClan(c.tag))
   );
 
-  const enriched = CLANS_CONFIG.map((cfg, i) => {
-    if (results[i].status === 'fulfilled') {
-      const d = results[i].value;
-      return {
-        tag:         cfg.tag,
-        icon:        cfg.icon,
-        minTH:       cfg.minTH,
-        name:        d.name          || cfg.tag,
-        level:       d.clanLevel     || 0,
-        members:     d.members       || 0,
-        trophies:    d.requiredTrophies || 0,
-        description: d.description   || '',
-        warLeague:   d.warLeague?.name || '',
-        _live:       true,
-      };
+  CLANS = CLANS_CONFIG.map((cfg, i) => {
+    if (results[i].status === 'rejected') {
+      // Mantém fallback básico se falhar
+      console.warn('Falha ao buscar clã', cfg.tag, results[i].reason);
+      return { tag: cfg.tag, icon: cfg.icon, name: cfg.tag, level:0, members:0, trophies:0, description:'', warLeague:'', warWins:0, warStreak:0, isWarring:false, _live:false };
     }
-    // fallback: usa dados mock do mesmo índice
-    return CLANS_FALLBACK[i] || { tag: cfg.tag, icon: cfg.icon, minTH: cfg.minTH, name: cfg.tag, level:0, members:0, trophies:0, description:'', warLeague:'' };
+
+    const d = results[i].value;
+
+    // Liga de guerra — vem como objeto { name: "Crystal League I" }
+    const warLeagueName = d.warLeague?.name || '';
+
+    // Streak de vitórias de guerra (warWinStreak)
+    const warStreak = d.warWinStreak || 0;
+    const warWins   = d.warWins || 0;
+
+    // Tipo do clã (inviteOnly, open, closed)
+    const clanType = d.type || '';
+
+    // Troféus mínimos exigidos pelo clã
+    const requiredTrophies = d.requiredTrophies || 0;
+
+    // Nível mínimo de TH exigido (requiredTownhallLevel — campo novo da API)
+    const requiredTH = d.requiredTownhallLevel || 0;
+
+    return {
+      tag:         cfg.tag,
+      icon:        cfg.icon,
+      name:        d.name             || cfg.tag,
+      level:       d.clanLevel        || 0,
+      members:     d.members          || 0,       // número atual de membros
+      trophies:    requiredTrophies,               // troféus mínimos p/ entrar
+      minTH:       requiredTH,                     // CV mínimo p/ entrar
+      description: d.description      || '',
+      warLeague:   warLeagueName,
+      warWins:     warWins,
+      warStreak:   warStreak,
+      clanType:    clanType,
+      badgeUrl:    d.badgeUrls?.small  || '',       // ícone oficial do clã
+      _live:       true,
+    };
   });
 
-  CLANS = enriched;
   banner.classList.remove('visible');
-
-  // Re-renderiza com dados reais
   renderHomeClans();
   renderClansPage();
   renderStats();
@@ -1032,28 +1117,53 @@ function renderStats() {
 function clanCard(c) {
   const liveBadge = c._live
     ? `<span class="clan-live-badge"><span class="clan-live-dot"></span>Ao vivo</span>`
-    : '';
+    : '<span class="clan-live-badge" style="background:#f3f3f1;color:var(--muted2);border-color:var(--border);">Carregando...</span>';
+
   const desc = c.description
     ? `<div class="clan-desc">${c.description}</div>`
     : '';
-  const warLeague = c.warLeague
+
+  // Badge oficial do clã (imagem da API) ou emoji fallback
+  const iconEl = c.badgeUrl
+    ? `<img src="${c.badgeUrl}" alt="${c.name}" style="width:40px;height:40px;object-fit:contain;">`
+    : c.icon;
+
+  // Liga de guerra
+  const warLeaguePill = c.warLeague
     ? `<span class="pill">⚔️ ${c.warLeague}</span>`
     : '';
+
+  // Streak de vitórias
+  const streakPill = c.warStreak > 0
+    ? `<span class="pill" style="background:#fff7ed;border-color:#fed7aa;color:#ea580c;">🔥 ${c.warStreak} streak</span>`
+    : '';
+
+  // Troféus mínimos
+  const trophiesPill = c.trophies > 0
+    ? `<span class="pill">🏆 ${c.trophies}+</span>`
+    : '';
+
+  // CV mínimo
+  const thPill = c.minTH > 0
+    ? `<span class="pill gold">Mín. CV ${c.minTH}</span>`
+    : '';
+
   return `
     <div class="clan-card">
       <div class="clan-top">
-        <div class="clan-icon">${c.icon}</div>
-        <div>
-          <div class="clan-name">${c.name}${liveBadge}</div>
+        <div class="clan-icon">${iconEl}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="clan-name">${c.name} ${liveBadge}</div>
           <div class="clan-tag">${c.tag}</div>
         </div>
       </div>
       <div class="clan-pills">
-        <span class="pill gold">Mín. CV ${c.minTH}</span>
-        <span class="pill">🏆 ${c.trophies || '—'}+</span>
+        ${thPill}
+        ${trophiesPill}
         <span class="pill">Nível ${c.level || '—'}</span>
         <span class="pill">👥 ${c.members || '—'}/50</span>
-        ${warLeague}
+        ${warLeaguePill}
+        ${streakPill}
       </div>
       ${desc}
       <button class="clan-link-btn" onclick="window.open('https://link.clashofclans.com/?action=OpenClanProfile&tag=${encodeURIComponent(c.tag)}')">
