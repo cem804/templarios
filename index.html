@@ -1,554 +1,1283 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<!--
+  TEMPLÁRIOS - Site da Aliança de Clãs
+  =====================================
+  VERSÃO: 2.0 - Visual Refactor
+  DATA: 2025
+
+  PARA A IA QUE LER ISSO:
+  ========================
+  Este é um arquivo HTML/CSS/JS de página única (SPA) sem backend ainda.
+  Todos os dados (clãs, layouts) são MOCK/PLACEHOLDER - serão substituídos
+  por Firebase Firestore + API do Clash of Clans via Vercel Functions.
+
+  ESTRUTURA DE PÁGINAS (SPA via display:none/block):
+  - #page-home     → Home com clãs e layouts em destaque
+  - #page-clans    → Lista de clãs (virá da API CoC)
+  - #page-layouts  → Catálogo de layouts com filtros por TH e tag
+  - #page-enviar   → Formulário de envio de layout (requer login)
+  - #page-detail   → Detalhe de um layout específico
+
+  SISTEMA DE AUTH (ainda mock):
+  - loggedIn: boolean global
+  - loggedUser: { name, clashName, role } - role: 'user' | 'mod' | 'admin'
+  - Login/Register via modal overlay
+  - Firebase Auth: email gerado como username@templarios.gg (invisível ao user)
+
+  FIREBASE COLLECTIONS (planejadas):
+  - users: { username, clashName, role, createdAt }
+  - clans: { tag, overrides: {desc, ordem}, fetchedFromAPI: {...} }
+  - layouts: { title, th, tags[], imgUrl, cocLink, desc, author, status: 'pending'|'approved', likes, views, createdAt }
+  - comments: { layoutId, userId, text, createdAt }
+
+  VERCEL FUNCTION PLANEJADA:
+  - /api/coc.js → proxy para api.clashofclans.com com chave segura
+    Endpoint: GET /api/coc?tag=XXXXXX
+
+  TAGS DE LAYOUT:
+  WAR, FARM, RANKED, TROPHY, UPGRADE, HYBRID
+
+  CVs SUPORTADOS:
+  TH 1-17 atualmente, estrutura preparada para TH18, TH19 e futuros
+  (dados de TH são dinâmicos, não hardcoded no filtro)
+
+  TODO BACKEND:
+  - [ ] Conectar Firebase Auth (login/register)
+  - [ ] Conectar Firestore (layouts, clãs, comentários)
+  - [ ] Vercel Function /api/coc.js para buscar clãs pela tag
+  - [ ] Sistema de moderação (aprovar/remover layouts)
+  - [ ] Upload via link (Imgur ou qualquer URL pública)
+-->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClashBR - Aliança de Clãs</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Templários — Aliança de Clãs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0d0a06;
-  --bg2:#141009;
-  --card:#1c1610;
-  --card2:#231c12;
-  --orange:#f97316;
-  --orange2:#ea6c10;
-  --gold:#c9963a;
-  --gold2:#e8c060;
-  --text:#d4b896;
-  --muted:#7a6a55;
-  --border:#2e2516;
-  --border2:#3d3020;
-  --red:#e24b4a;
-  --green:#4caf50;
-  --blue:#4a9eff;
-  --purple:#9b72dd;
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f7f7f6;
+  --bg3: #f0f0ee;
+  --border: #e8e8e5;
+  --border2: #d4d4d0;
+  --text: #111110;
+  --text2: #3d3d3a;
+  --muted: #888884;
+  --muted2: #b0b0ac;
+
+  /* accent - dourado guerra */
+  --gold: #b8860b;
+  --gold-bg: #fdf8ec;
+  --gold-border: #e8d48a;
+
+  /* tags */
+  --war: #dc2626;
+  --war-bg: #fef2f2;
+  --farm: #16a34a;
+  --farm-bg: #f0fdf4;
+  --ranked: #7c3aed;
+  --ranked-bg: #faf5ff;
+  --trophy: #d97706;
+  --trophy-bg: #fffbeb;
+  --upgrade: #0284c7;
+  --upgrade-bg: #f0f9ff;
+  --hybrid: #db2777;
+  --hybrid-bg: #fdf2f8;
+
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.05);
 }
-body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:15px;min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0;}
 
-/* NAV */
-nav{position:sticky;top:0;z-index:100;background:#0d0a06ee;border-bottom:1px solid var(--border2);backdrop-filter:blur(8px);}
-.nav-inner{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:8px;height:56px;}
-.logo{font-family:'Cinzel',serif;font-weight:700;font-size:18px;color:var(--gold2);letter-spacing:1px;flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;}
-.logo-icon{font-size:22px;}
-.nav-links{display:flex;gap:2px;}
-.nav-btn{background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;transition:.15s;letter-spacing:.3px;}
-.nav-btn:hover,.nav-btn.active{color:var(--text);background:var(--border2);}
-.nav-btn.active{color:var(--orange);}
-.nav-login{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:6px 14px;border-radius:6px;cursor:pointer;margin-left:8px;transition:.15s;}
-.nav-login:hover{background:var(--orange2);}
-@media(max-width:580px){.nav-btn{padding:6px 8px;font-size:12px;}.logo{font-size:15px;}}
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* PAGES */
-.page{display:none;max-width:1100px;margin:0 auto;padding:24px 16px 48px;position:relative;z-index:1;}
-.page.active{display:block;}
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-/* HERO */
-.hero{text-align:center;padding:48px 0 32px;}
-.hero-tag{display:inline-block;background:var(--border2);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 12px;border-radius:4px;margin-bottom:16px;text-transform:uppercase;}
-.hero h1{font-family:'Cinzel',serif;font-size:clamp(28px,5vw,52px);font-weight:700;color:#fff;line-height:1.15;margin-bottom:12px;text-shadow:0 0 40px #f9731640;}
-.hero h1 span{color:var(--gold2);}
-.hero p{color:var(--muted);font-size:16px;max-width:480px;margin:0 auto 28px;}
-.hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;}
-.hero-stat{text-align:center;}
-.hero-stat .num{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--orange);}
-.hero-stat .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+/* ─── NAV ─── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,.9);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.nav-inner {
+  max-width: 1120px; margin: 0 auto;
+  padding: 0 20px;
+  display: flex; align-items: center; gap: 4px;
+  height: 52px;
+}
+.logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 19px;
+  color: var(--text);
+  letter-spacing: -.3px;
+  cursor: pointer;
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none;
+}
+.logo-dot { color: var(--gold); }
+.nav-links { display: flex; gap: 2px; }
+.nav-btn {
+  background: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 500;
+  color: var(--muted);
+  padding: 5px 11px; border-radius: 7px;
+  cursor: pointer; transition: all .15s;
+}
+.nav-btn:hover { color: var(--text); background: var(--bg2); }
+.nav-btn.active { color: var(--text); font-weight: 600; background: var(--bg3); }
+.nav-right { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+.nav-login {
+  background: var(--text); color: #fff;
+  border: none; font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  padding: 6px 14px; border-radius: 7px;
+  cursor: pointer; transition: opacity .15s;
+}
+.nav-login:hover { opacity: .85; }
+.nav-user {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 500; color: var(--text2);
+}
+.nav-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  cursor: pointer;
+}
+@media(max-width: 600px) {
+  .nav-btn { padding: 5px 8px; font-size: 12.5px; }
+  .logo { font-size: 16px; }
+}
 
-/* SECTION TITLE */
-.sec-title{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold2);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
-.sec-title::after{content:'';flex:1;height:1px;background:var(--border2);}
+/* ─── PAGES ─── */
+.page { display: none; max-width: 1120px; margin: 0 auto; padding: 40px 20px 80px; }
+.page.active { display: block; }
 
-/* CLAN CARDS */
-.clan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:40px;}
-.clan-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;transition:.2s;cursor:pointer;}
-.clan-card:hover{border-color:var(--gold);background:var(--card2);}
-.clan-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.clan-badge{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.clan-info h3{font-size:14px;font-weight:700;color:#fff;line-height:1.2;}
-.clan-info .tag{font-size:11px;color:var(--muted);}
-.clan-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-.meta-pill{font-size:11px;background:var(--bg2);border:1px solid var(--border2);color:var(--muted);padding:2px 8px;border-radius:4px;}
-.meta-pill.th{color:var(--gold);border-color:#3d3020;}
-.clan-btn{width:100%;background:none;border:1px solid var(--orange);color:var(--orange);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:6px;border-radius:6px;cursor:pointer;transition:.15s;}
-.clan-btn:hover{background:var(--orange);color:#fff;}
+/* ─── HERO ─── */
+.hero {
+  padding: 64px 0 48px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; letter-spacing: .6px;
+  color: var(--gold); text-transform: uppercase;
+  background: var(--gold-bg); border: 1px solid var(--gold-border);
+  padding: 4px 10px; border-radius: 20px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -.5px;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub {
+  font-size: 16px; color: var(--muted);
+  max-width: 420px; margin-bottom: 36px;
+  line-height: 1.6;
+}
+.hero-stats {
+  display: flex; gap: 40px; flex-wrap: wrap;
+}
+.hero-stat .n {
+  font-family: 'DM Serif Display', serif;
+  font-size: 30px; color: var(--text); line-height: 1;
+  margin-bottom: 3px;
+}
+.hero-stat .l {
+  font-size: 12px; color: var(--muted); font-weight: 500;
+  text-transform: uppercase; letter-spacing: .5px;
+}
 
-/* FILTER BAR */
-.filter-bar{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
-.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.filter-label{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px;}
-.filter-select{background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;padding:5px 10px;border-radius:6px;cursor:pointer;outline:none;}
-.filter-select:focus{border-color:var(--orange);}
-.tag-filters{display:flex;gap:6px;flex-wrap:wrap;}
-.tag-pill{background:var(--bg2);border:1px solid var(--border2);color:var(--muted);font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;transition:.15s;letter-spacing:.4px;}
-.tag-pill:hover,.tag-pill.active{border-color:currentColor;}
-.tag-pill.active.war{color:#f97316;border-color:#f97316;background:#f9731615;}
-.tag-pill.active.farm{color:#4caf50;border-color:#4caf50;background:#4caf5015;}
-.tag-pill.active.ranked{color:#9b72dd;border-color:#9b72dd;background:#9b72dd15;}
-.tag-pill.active.upgrade{color:#4a9eff;border-color:#4a9eff;background:#4a9eff15;}
-.tag-pill.active.trophy{color:#e8c060;border-color:#e8c060;background:#e8c06015;}
-.tag-pill.active.hybrid{color:#e24b4a;border-color:#e24b4a;background:#e24b4a15;}
-.tag-pill.active.all{color:var(--text);border-color:var(--border2);background:var(--border2);}
+/* ─── SECTION ─── */
+.sec-header {
+  display: flex; align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.sec-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; font-weight: 400;
+  color: var(--text); letter-spacing: -.2px;
+}
+.sec-link {
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  cursor: pointer; background: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: color .15s;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.sec-link:hover { color: var(--text); }
+.section { margin-bottom: 56px; }
 
-/* LAYOUT GRID */
-.layout-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
-.layout-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;overflow:hidden;transition:.2s;cursor:pointer;}
-.layout-card:hover{border-color:var(--orange);transform:translateY(-2px);}
-.layout-card.indicado{border-color:var(--gold);}
-.layout-img{width:100%;height:150px;object-fit:cover;background:var(--card2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.layout-img-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3;}
-.layout-img-overlay{position:absolute;top:8px;left:8px;display:flex;gap:6px;flex-wrap:wrap;}
-.th-badge{background:#000a;color:var(--gold2);font-size:11px;font-weight:700;padding:3px 7px;border-radius:4px;border:1px solid var(--gold);backdrop-filter:blur(4px);}
-.ind-badge{background:#c9963aee;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;}
-.layout-body{padding:12px 14px;}
-.layout-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.layout-desc{font-size:12px;color:var(--muted);margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;}
-.layout-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
-.ltag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.4px;}
-.ltag.war{background:#f9731620;color:#f97316;border:1px solid #f9731640;}
-.ltag.farm{background:#4caf5020;color:#4caf50;border:1px solid #4caf5040;}
-.ltag.ranked{background:#9b72dd20;color:#9b72dd;border:1px solid #9b72dd40;}
-.ltag.upgrade{background:#4a9eff20;color:#4a9eff;border:1px solid #4a9eff40;}
-.ltag.trophy{background:#e8c06020;color:#e8c060;border:1px solid #e8c06040;}
-.ltag.hybrid{background:#e24b4a20;color:#e24b4a;border:1px solid #e24b4a40;}
-.layout-footer{display:flex;align-items:center;gap:0;border-top:1px solid var(--border);padding-top:10px;}
-.layout-stats{display:flex;gap:12px;flex:1;}
-.lstat{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);}
-.lstat svg{width:13px;height:13px;opacity:.7;}
-.layout-author{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.layout-author span{color:var(--text);font-weight:600;}
-.coc-btn{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:.15s;}
-.coc-btn:hover{background:var(--orange2);}
+/* ─── CLAN CARDS ─── */
+.clan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.clan-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 18px 14px;
+  transition: all .18s; cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.clan-card:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.clan-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.clan-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--bg3); display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.clan-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.clan-tag { font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 1px; }
+.clan-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pill {
+  font-size: 11.5px; font-weight: 500;
+  padding: 3px 9px; border-radius: 20px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text2);
+}
+.pill.gold { background: var(--gold-bg); border-color: var(--gold-border); color: var(--gold); font-weight: 600; }
+.clan-link-btn {
+  width: 100%; padding: 7px; border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--bg2); color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.clan-link-btn:hover { background: var(--text); color: #fff; border-color: var(--text); }
 
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;background:#000b;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
-.modal{background:var(--card2);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:400px;padding:28px 24px;}
-.modal-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);text-align:center;margin-bottom:6px;}
-.modal-sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:24px;}
-.field{margin-bottom:14px;}
-.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase;}
-.field input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;transition:.15s;}
-.field input:focus{border-color:var(--orange);}
-.btn-main{width:100%;background:var(--orange);border:none;color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;padding:11px;border-radius:8px;cursor:pointer;transition:.15s;margin-top:4px;}
-.btn-main:hover{background:var(--orange2);}
-.modal-forgot{text-align:center;margin-top:14px;font-size:13px;color:var(--muted);}
-.modal-forgot a{color:var(--orange);cursor:pointer;text-decoration:none;}
-.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
-.modal-wrap{position:relative;}
+/* ─── FILTER BAR ─── */
+.filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 24px;
+}
+.filter-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.filter-sep { width: 1px; height: 18px; background: var(--border2); }
+.filter-select {
+  background: var(--bg); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  padding: 5px 10px; border-radius: 7px;
+  cursor: pointer; outline: none;
+}
+.filter-select:focus { border-color: var(--text2); }
+.tag-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.tag-btn {
+  font-size: 11.5px; font-weight: 600;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: var(--bg); color: var(--muted);
+  cursor: pointer; transition: all .15s;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: .2px; text-transform: uppercase;
+}
+.tag-btn:hover { color: var(--text); border-color: var(--border2); }
+.tag-btn.active-all { background: var(--text); color: #fff; border-color: var(--text); }
+.tag-btn.active-war { background: var(--war-bg); color: var(--war); border-color: var(--war); }
+.tag-btn.active-farm { background: var(--farm-bg); color: var(--farm); border-color: var(--farm); }
+.tag-btn.active-ranked { background: var(--ranked-bg); color: var(--ranked); border-color: var(--ranked); }
+.tag-btn.active-trophy { background: var(--trophy-bg); color: var(--trophy); border-color: var(--trophy); }
+.tag-btn.active-upgrade { background: var(--upgrade-bg); color: var(--upgrade); border-color: var(--upgrade); }
+.tag-btn.active-hybrid { background: var(--hybrid-bg); color: var(--hybrid); border-color: var(--hybrid); }
 
-/* SUBMIT PAGE */
-.submit-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:24px;max-width:580px;margin:0 auto;}
-.submit-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);margin-bottom:6px;}
-.submit-sub{color:var(--muted);font-size:13px;margin-bottom:24px;}
-.field textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;transition:.15s;resize:vertical;min-height:80px;}
-.field textarea:focus{border-color:var(--orange);}
-.field select{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;cursor:pointer;}
-.tags-check{display:flex;gap:8px;flex-wrap:wrap;}
-.tag-check{display:flex;align-items:center;gap:5px;cursor:pointer;}
-.tag-check input{accent-color:var(--orange);}
-.tag-check span{font-size:13px;font-weight:600;}
-.upload-zone{border:2px dashed var(--border2);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:.15s;}
-.upload-zone:hover{border-color:var(--orange);background:var(--bg2);}
-.upload-icon{font-size:28px;margin-bottom:8px;opacity:.5;}
-.upload-txt{font-size:13px;color:var(--muted);}
-.upload-txt span{color:var(--orange);font-weight:600;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:480px){.form-row{grid-template-columns:1fr;}}
-.not-logged{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:40px 24px;text-align:center;max-width:400px;margin:0 auto;}
-.not-logged .icon{font-size:40px;margin-bottom:16px;opacity:.6;}
-.not-logged h3{font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:8px;}
-.not-logged p{color:var(--muted);font-size:14px;margin-bottom:20px;}
+/* ─── LAYOUT GRID ─── */
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+.layout-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  transition: all .18s; cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+}
+.layout-card:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.layout-card.featured { border-color: var(--gold-border); }
+.layout-img {
+  width: 100%; height: 158px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px; opacity: .4;
+  position: relative; overflow: hidden;
+  flex-shrink: 0;
+}
+.layout-img img { width: 100%; height: 100%; object-fit: cover; opacity: 1; }
+.layout-img-badges { position: absolute; top: 10px; left: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+.th-badge {
+  font-size: 11px; font-weight: 700;
+  background: rgba(0,0,0,.7); color: #fff;
+  padding: 3px 7px; border-radius: 5px;
+  backdrop-filter: blur(4px);
+}
+.feat-badge {
+  font-size: 10px; font-weight: 700;
+  background: var(--gold); color: #fff;
+  padding: 3px 8px; border-radius: 5px;
+  letter-spacing: .3px; text-transform: uppercase;
+}
+.layout-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
+.layout-title {
+  font-size: 14.5px; font-weight: 600; color: var(--text);
+  margin-bottom: 5px; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.layout-desc {
+  font-size: 12.5px; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+  line-height: 1.5; margin-bottom: 10px; flex: 1;
+}
+.layout-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.ltag {
+  font-size: 10.5px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  letter-spacing: .3px; text-transform: uppercase;
+}
+.ltag-war { background: var(--war-bg); color: var(--war); }
+.ltag-farm { background: var(--farm-bg); color: var(--farm); }
+.ltag-ranked { background: var(--ranked-bg); color: var(--ranked); }
+.ltag-trophy { background: var(--trophy-bg); color: var(--trophy); }
+.ltag-upgrade { background: var(--upgrade-bg); color: var(--upgrade); }
+.ltag-hybrid { background: var(--hybrid-bg); color: var(--hybrid); }
+.layout-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 10px; border-top: 1px solid var(--border);
+}
+.layout-meta { display: flex; align-items: center; gap: 12px; }
+.lmeta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.coc-btn {
+  background: var(--text); color: #fff;
+  border: none; font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 5px 11px; border-radius: 7px;
+  cursor: pointer; transition: opacity .15s;
+  white-space: nowrap;
+}
+.coc-btn:hover { opacity: .8; }
 
-/* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--card2);border:1px solid var(--green);color:var(--text);padding:10px 16px;border-radius:8px;font-size:13px;z-index:300;transform:translateY(100px);transition:.3s;border-left:3px solid var(--green);}
-.toast.show{transform:translateY(0);}
+/* ─── LAYOUT DETAIL ─── */
+.detail-layout { display: grid; grid-template-columns: 1fr 320px; gap: 28px; }
+@media(max-width: 760px) { .detail-layout { grid-template-columns: 1fr; } }
+.detail-img-wrap {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  height: 300px; display: flex; align-items: center;
+  justify-content: center; font-size: 80px; opacity: .3;
+  margin-bottom: 20px;
+}
+.detail-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 1; }
+.detail-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px; font-weight: 400;
+  color: var(--text); margin-bottom: 8px;
+  letter-spacing: -.2px;
+}
+.detail-author { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.detail-author strong { color: var(--text2); }
+.detail-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.detail-desc-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 8px;
+}
+.detail-desc-text {
+  font-size: 14.5px; color: var(--text2);
+  line-height: 1.7; margin-bottom: 28px;
+}
+/* sidebar */
+.detail-sidebar { }
+.detail-meta-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px;
+  margin-bottom: 14px;
+}
+.detail-meta-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+}
+.detail-meta-row:last-child { border-bottom: none; }
+.detail-meta-row .k { color: var(--muted); font-weight: 400; }
+.detail-meta-row .v { color: var(--text); font-weight: 600; }
+.btn-primary {
+  width: 100%; padding: 10px;
+  background: var(--text); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.btn-primary:hover { opacity: .85; }
+.btn-secondary {
+  width: 100%; padding: 9px;
+  background: var(--bg); color: var(--text2);
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.btn-secondary:hover { background: var(--bg2); }
+/* back btn */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  cursor: pointer; background: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 24px;
+  transition: color .15s;
+}
+.back-btn:hover { color: var(--text); }
 
-/* FORGOT PAGE */
-.forgot-info{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:32px 24px;max-width:400px;margin:40px auto;text-align:center;}
-.forgot-info .icon{font-size:36px;margin-bottom:16px;}
-.forgot-info h3{font-family:'Cinzel',serif;font-size:18px;color:var(--gold2);margin-bottom:10px;}
-.forgot-info p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:16px;}
-.wz-btn{display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;cursor:pointer;}
+/* ─── COMMENTS ─── */
+.comments-wrap { margin-top: 32px; }
+.comments-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: var(--text);
+  margin-bottom: 20px; font-weight: 400;
+}
+.comment {
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.comment:last-of-type { border-bottom: none; }
+.comment-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.comment-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--muted);
+}
+.comment-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.comment-date { font-size: 12px; color: var(--muted2); margin-left: auto; }
+.comment-text { font-size: 13.5px; color: var(--text2); line-height: 1.5; }
+.comment-input-wrap {
+  display: flex; gap: 10px; margin-top: 18px; align-items: flex-start;
+}
+.comment-input {
+  flex: 1; padding: 9px 13px;
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  background: var(--bg); font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px; color: var(--text); outline: none;
+  transition: border-color .15s;
+}
+.comment-input:focus { border-color: var(--text2); }
+.comment-send {
+  padding: 9px 16px; background: var(--text); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+  white-space: nowrap;
+}
+.comment-send:hover { opacity: .8; }
 
-/* DETAIL VIEW */
-.detail-back{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:20px;background:none;border:none;font-family:'Nunito',sans-serif;}
-.detail-back:hover{color:var(--text);}
-.detail-img{width:100%;max-height:340px;object-fit:cover;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.3;margin-bottom:20px;min-height:200px;}
-.detail-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
-.detail-title{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#fff;flex:1;}
-.detail-body{display:grid;grid-template-columns:1fr 300px;gap:20px;}
-@media(max-width:680px){.detail-body{grid-template-columns:1fr;}}
-.detail-desc{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px;}
-.detail-desc h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-.detail-desc p{font-size:14px;color:var(--text);line-height:1.7;}
-.detail-meta{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:16px;}
-.meta-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;}
-.meta-row:last-child{border-bottom:none;}
-.meta-row .k{color:var(--muted);}
-.meta-row .v{color:var(--text);font-weight:600;}
-.comments-section{margin-top:20px;}
-.comment-box{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
-.comment-user{font-size:12px;font-weight:700;color:var(--orange);margin-bottom:4px;}
-.comment-text{font-size:13px;color:var(--text);line-height:1.6;}
-.comment-date{font-size:11px;color:var(--muted);margin-top:4px;}
-.comment-input-row{display:flex;gap:8px;margin-top:12px;}
-.comment-input-row input{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;padding:8px 12px;border-radius:7px;outline:none;}
-.comment-input-row input:focus{border-color:var(--orange);}
-.comment-send{background:var(--orange);color:#fff;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;border-radius:7px;cursor:pointer;}
+/* ─── ENVIAR LAYOUT ─── */
+.form-wrap { max-width: 600px; }
+.form-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px; color: var(--text);
+  margin-bottom: 6px; font-weight: 400;
+}
+.form-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+.field { margin-bottom: 18px; }
+.field label {
+  display: block; font-size: 12px; font-weight: 700;
+  letter-spacing: .4px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 7px;
+}
+.field input, .field textarea, .field select {
+  width: 100%; padding: 9px 13px;
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  outline: none; transition: border-color .15s;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--text2); }
+.field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+.tag-check-group { display: flex; gap: 7px; flex-wrap: wrap; }
+.tag-check {
+  padding: 5px 12px; border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: var(--bg); color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+  letter-spacing: .2px; text-transform: uppercase;
+  user-select: none;
+}
+.tag-check.sel-war { background: var(--war-bg); color: var(--war); border-color: var(--war); }
+.tag-check.sel-farm { background: var(--farm-bg); color: var(--farm); border-color: var(--farm); }
+.tag-check.sel-ranked { background: var(--ranked-bg); color: var(--ranked); border-color: var(--ranked); }
+.tag-check.sel-trophy { background: var(--trophy-bg); color: var(--trophy); border-color: var(--trophy); }
+.tag-check.sel-upgrade { background: var(--upgrade-bg); color: var(--upgrade); border-color: var(--upgrade); }
+.tag-check.sel-hybrid { background: var(--hybrid-bg); color: var(--hybrid); border-color: var(--hybrid); }
+.btn-submit {
+  padding: 11px 28px;
+  background: var(--text); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+  margin-top: 8px;
+}
+.btn-submit:hover { opacity: .85; }
+.login-prompt {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 40px 32px;
+  text-align: center;
+}
+.login-prompt p { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+.login-prompt strong { color: var(--text); }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 380px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-lg);
+  animation: modal-in .2s ease;
+}
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+.modal-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; color: var(--text);
+  margin-bottom: 5px; font-weight: 400;
+}
+.modal-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 24px; }
+.modal-tabs { display: flex; gap: 2px; margin-bottom: 24px; background: var(--bg2); border-radius: 8px; padding: 3px; }
+.modal-tab {
+  flex: 1; padding: 6px; border-radius: 6px;
+  border: none; background: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: all .15s;
+}
+.modal-tab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+.modal-field { margin-bottom: 14px; }
+.modal-field label {
+  display: block; font-size: 11.5px; font-weight: 700;
+  letter-spacing: .4px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
+}
+.modal-field input {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--border2); border-radius: 8px;
+  background: var(--bg2); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  outline: none; transition: border-color .15s;
+}
+.modal-field input:focus { border-color: var(--text2); background: var(--bg); }
+.modal-help { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.modal-btn {
+  width: 100%; padding: 10px;
+  background: var(--text); color: #fff;
+  border: none; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+  margin-top: 8px;
+}
+.modal-btn:hover { opacity: .85; }
+.modal-forgot {
+  text-align: center; margin-top: 14px;
+  font-size: 12.5px; color: var(--muted);
+}
+.modal-forgot a { color: var(--text2); cursor: pointer; font-weight: 500; }
+.modal-close {
+  position: absolute; right: 0; top: -4px;
+  background: none; border: none;
+  font-size: 18px; color: var(--muted);
+  cursor: pointer; line-height: 1;
+  font-family: 'DM Sans', sans-serif;
+}
+.modal-close:hover { color: var(--text); }
+.modal-header-row { display: flex; align-items: flex-start; position: relative; margin-bottom: 5px; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+  background: var(--text); color: #fff;
+  font-size: 13.5px; font-weight: 500;
+  padding: 10px 20px; border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; transition: all .25s;
+  pointer-events: none; z-index: 300; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── EMPTY STATE ─── */
+.empty {
+  padding: 48px 0; text-align: center;
+  color: var(--muted); font-size: 14px;
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .5; }
+
+/* ─── ADMIN / MOD PANEL ─── */
+.mod-banner {
+  background: var(--gold-bg); border: 1px solid var(--gold-border);
+  border-radius: var(--radius); padding: 12px 16px;
+  font-size: 13px; color: var(--gold);
+  font-weight: 600; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pending-tag {
+  background: #fef9c3; color: #a16207;
+  border: 1px solid #fde68a;
+  font-size: 10.5px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <div class="logo" onclick="showPage('home')">
-      <span class="logo-icon">⚔️</span>
-      ClashBR
-    </div>
+    <span class="logo" onclick="showPage('home')">Templários<span class="logo-dot">.</span></span>
     <div class="nav-links">
       <button class="nav-btn active" id="nb-home" onclick="showPage('home')">Início</button>
+      <button class="nav-btn" id="nb-clans" onclick="showPage('clans')">Clãs</button>
       <button class="nav-btn" id="nb-layouts" onclick="showPage('layouts')">Layouts</button>
       <button class="nav-btn" id="nb-enviar" onclick="showPage('enviar')">Enviar</button>
     </div>
-    <button class="nav-login" id="nav-login-btn" onclick="openModal()">Entrar</button>
+    <div class="nav-right">
+      <!-- Estado deslogado -->
+      <button class="nav-login" id="btn-login" onclick="openModal('login')">Entrar</button>
+      <!-- Estado logado (oculto inicialmente) -->
+      <div class="nav-user" id="nav-user-info" style="display:none;">
+        <div class="nav-avatar" id="nav-avatar" onclick="doLogout()" title="Clique para sair">?</div>
+        <span id="nav-username" style="font-size:13.5px;"></span>
+      </div>
+    </div>
   </div>
 </nav>
 
-<!-- HOME -->
+<!-- ══════════════════════════════════
+     PAGE: HOME
+══════════════════════════════════ -->
 <div class="page active" id="page-home">
+
+  <!-- HERO -->
   <div class="hero">
-    <div class="hero-tag">⚔️ Aliança Brasileira</div>
-    <h1>Domine o <span>Clash</span><br>com os melhores layouts</h1>
-    <p>A maior aliança de clãs brasileiros. Layouts aprovados, estratégias de guerra e muito mais.</p>
+    <div class="hero-eyebrow">⚔️ Aliança Templários</div>
+    <h1>Dominar a guerra<br>é uma <em>tradição.</em></h1>
+    <p class="hero-sub">Comunidade brasileira de Clash of Clans. Layouts, estratégias e clãs organizados para quem joga a sério.</p>
     <div class="hero-stats">
-      <div class="hero-stat"><div class="num">8</div><div class="lbl">Clãs</div></div>
-      <div class="hero-stat"><div class="num">247</div><div class="lbl">Membros</div></div>
-      <div class="hero-stat"><div class="num">134</div><div class="lbl">Layouts</div></div>
-      <div class="hero-stat"><div class="num">98%</div><div class="lbl">Win rate</div></div>
+      <div class="hero-stat"><div class="n" id="stat-clans">—</div><div class="l">Clãs</div></div>
+      <div class="hero-stat"><div class="n" id="stat-layouts">—</div><div class="l">Layouts</div></div>
+      <div class="hero-stat"><div class="n" id="stat-members">—</div><div class="l">Membros</div></div>
     </div>
   </div>
 
-  <div class="sec-title">🏆 Layouts Indicados</div>
-  <div class="layout-grid" id="home-featured"></div>
+  <!-- CLÃS EM DESTAQUE -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-title">Nossos Clãs</div>
+      <button class="sec-link" onclick="showPage('clans')">Ver todos →</button>
+    </div>
+    <div class="clan-grid" id="home-clans"></div>
+  </div>
 
-  <div class="sec-title" style="margin-top:32px;">🛡️ Nossos Clãs</div>
-  <div class="clan-grid" id="clan-grid"></div>
+  <!-- LAYOUTS EM DESTAQUE -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-title">Layouts em Destaque</div>
+      <button class="sec-link" onclick="showPage('layouts')">Ver todos →</button>
+    </div>
+    <div class="layout-grid" id="home-layouts"></div>
+  </div>
+
 </div>
 
-<!-- LAYOUTS -->
+<!-- ══════════════════════════════════
+     PAGE: CLANS
+══════════════════════════════════ -->
+<div class="page" id="page-clans">
+  <div style="margin-bottom:32px;">
+    <div class="sec-title" style="margin-bottom:6px;">Nossos Clãs</div>
+    <p style="color:var(--muted);font-size:14px;">Encontre o clã certo para seu estilo de jogo. Dados via API oficial do CoC.</p>
+  </div>
+  <!-- Banner de loading da API (visível quando buscar) -->
+  <div id="api-loading" style="display:none;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;color:var(--muted);margin-bottom:24px;">
+    ⏳ Buscando dados dos clãs na API do Clash of Clans...
+  </div>
+  <div class="clan-grid" id="clans-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE: LAYOUTS
+══════════════════════════════════ -->
 <div class="page" id="page-layouts">
-  <div style="margin-bottom:20px;">
-    <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold2);margin-bottom:4px;">📐 Galeria de Layouts</div>
-    <div style="color:var(--muted);font-size:14px;">Filtre por TH e tipo de layout</div>
+  <div style="margin-bottom:24px;">
+    <div class="sec-title" style="margin-bottom:6px;">Layouts</div>
+    <p style="color:var(--muted);font-size:14px;">Bases testadas pela comunidade. Filtre por CV e tipo.</p>
   </div>
+
+  <!-- FILTROS -->
   <div class="filter-bar">
-    <div class="filter-row" style="margin-bottom:10px;">
-      <span class="filter-label">Town Hall:</span>
-      <select class="filter-select" id="th-filter" onchange="renderLayouts()">
-        <option value="all">Todos</option>
-        <option value="9">TH 9</option>
-        <option value="10">TH 10</option>
-        <option value="11">TH 11</option>
-        <option value="12">TH 12</option>
-        <option value="13">TH 13</option>
-        <option value="14">TH 14</option>
-        <option value="15">TH 15</option>
-        <option value="16">TH 16</option>
-        <option value="17">TH 17</option>
-      </select>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Tipo:</span>
-      <div class="tag-filters" id="tag-filters">
-        <span class="tag-pill active all" data-tag="all" onclick="setTag('all')">Todos</span>
-        <span class="tag-pill war" data-tag="war" onclick="setTag('war')">WAR</span>
-        <span class="tag-pill farm" data-tag="farm" onclick="setTag('farm')">FARM</span>
-        <span class="tag-pill ranked" data-tag="ranked" onclick="setTag('ranked')">RANKED</span>
-        <span class="tag-pill upgrade" data-tag="upgrade" onclick="setTag('upgrade')">UPGRADE</span>
-        <span class="tag-pill trophy" data-tag="trophy" onclick="setTag('trophy')">TROPHY</span>
-        <span class="tag-pill hybrid" data-tag="hybrid" onclick="setTag('hybrid')">HYBRID</span>
-      </div>
-    </div>
+    <span class="filter-label">CV</span>
+    <select class="filter-select" id="th-filter" onchange="renderLayouts()">
+      <!-- Opções geradas dinamicamente pelo JS — preparado para TH18, TH19... -->
+    </select>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Tag</span>
+    <div class="tag-btns" id="tag-btns"></div>
   </div>
+
   <div class="layout-grid" id="layout-grid"></div>
 </div>
 
-<!-- ENVIAR -->
-<div class="page" id="page-enviar">
-  <div id="enviar-logged" style="display:none;">
-    <div class="submit-card">
-      <div class="submit-title">📤 Enviar Layout</div>
-      <div class="submit-sub">Seu layout será revisado por um moderador antes de aparecer na galeria.</div>
-      <div class="form-row">
-        <div class="field">
-          <label>Town Hall</label>
-          <select class="field" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;padding:10px 12px;border-radius:7px;outline:none;">
-            <option>TH 9</option><option>TH 10</option><option>TH 11</option><option>TH 12</option>
-            <option>TH 13</option><option>TH 14</option><option selected>TH 15</option><option>TH 16</option><option>TH 17</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Nome do Layout</label>
-          <input type="text" placeholder="Ex: Anti-3 estrelas TH15">
-        </div>
-      </div>
-      <div class="field">
-        <label>Tipos (pode marcar mais de um)</label>
-        <div class="tags-check">
-          <label class="tag-check"><input type="checkbox"><span style="color:#f97316;">WAR</span></label>
-          <label class="tag-check"><input type="checkbox"><span style="color:#4caf50;">FARM</span></label>
-          <label class="tag-check"><input type="checkbox"><span style="color:#9b72dd;">RANKED</span></label>
-          <label class="tag-check"><input type="checkbox"><span style="color:#4a9eff;">UPGRADE</span></label>
-          <label class="tag-check"><input type="checkbox"><span style="color:#e8c060;">TROPHY</span></label>
-          <label class="tag-check"><input type="checkbox"><span style="color:#e24b4a;">HYBRID</span></label>
-        </div>
-      </div>
-      <div class="field">
-        <label>Link do Layout (CoC)</label>
-        <input type="text" placeholder="https://link.clashofclans.com/?action=OpenLayout&id=...">
-      </div>
-      <div class="field">
-        <label>Print do Layout (1 imagem)</label>
-        <div class="upload-zone">
-          <div class="upload-icon">🖼️</div>
-          <div class="upload-txt">Arraste ou <span>clique para selecionar</span></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">PNG/JPG • máx 2MB</div>
-        </div>
-      </div>
-      <div class="field">
-        <label>Descrição</label>
-        <textarea placeholder="Explica como usar o layout, pontos fortes, quais ataques ele protege..."></textarea>
-      </div>
-      <button class="btn-main" onclick="showToast()">Enviar para Aprovação ⚔️</button>
-    </div>
-  </div>
-  <div id="enviar-logoff">
-    <div class="not-logged">
-      <div class="icon">🔐</div>
-      <h3>Faça login para enviar</h3>
-      <p>Você precisa estar logado para enviar layouts. Após enviar, um moderador irá revisar antes de publicar.</p>
-      <button class="btn-main" onclick="openModal()" style="width:auto;padding:10px 24px;">Fazer Login</button>
-    </div>
-  </div>
-</div>
-
-<!-- DETALHE -->
+<!-- ══════════════════════════════════
+     PAGE: DETAIL
+══════════════════════════════════ -->
 <div class="page" id="page-detail">
-  <button class="detail-back" onclick="showPage('layouts')">← Voltar aos Layouts</button>
+  <button class="back-btn" onclick="showPage('layouts')">← Voltar para layouts</button>
   <div id="detail-content"></div>
 </div>
 
-<!-- MODAL LOGIN -->
-<div class="modal-overlay" id="modal-overlay" style="display:none;" onclick="closeModalOutside(event)">
-  <div class="modal modal-wrap">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title">⚔️ Entrar</div>
-    <div class="modal-sub">Acesse com seu usuário da aliança</div>
-    <div class="field"><label>Usuário</label><input type="text" placeholder="seu_usuario" id="inp-user"></div>
-    <div class="field"><label>Senha</label><input type="password" placeholder="••••••••" id="inp-pass"></div>
-    <button class="btn-main" onclick="doLogin()">Entrar</button>
-    <div class="modal-forgot">Esqueceu a senha? <a onclick="showPage('forgot');closeModal()">Saiba como recuperar</a></div>
+<!-- ══════════════════════════════════
+     PAGE: ENVIAR
+══════════════════════════════════ -->
+<div class="page" id="page-enviar">
+
+  <!-- Se não logado -->
+  <div id="enviar-logoff" class="login-prompt">
+    <div style="font-size:36px;margin-bottom:16px;">🔒</div>
+    <p><strong>Faça login</strong> para enviar um layout para a comunidade.</p>
+    <button class="nav-login" onclick="openModal('login')">Entrar / Criar conta</button>
+  </div>
+
+  <!-- Se logado -->
+  <div id="enviar-logado" style="display:none;">
+    <div class="form-wrap">
+      <div class="form-title">Enviar Layout</div>
+      <p class="form-sub">Seu layout será revisado por um moderador antes de aparecer para todos.</p>
+
+      <div class="field">
+        <label>Título</label>
+        <input type="text" id="f-title" placeholder="Ex: Anti-3 Estrelas TH17 War">
+      </div>
+      <div class="field">
+        <label>Town Hall (CV)</label>
+        <select id="f-th">
+          <!-- Gerado dinamicamente -->
+        </select>
+      </div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tag-check-group" id="tag-checks"></div>
+      </div>
+      <div class="field">
+        <label>Link da Imagem (Imgur, Google Fotos, etc.)</label>
+        <input type="url" id="f-img" placeholder="https://i.imgur.com/...">
+      </div>
+      <div class="field">
+        <label>Link do Layout no CoC</label>
+        <input type="url" id="f-coc" placeholder="https://link.clashofclans.com/?action=...">
+      </div>
+      <div class="field">
+        <label>Descrição</label>
+        <textarea id="f-desc" placeholder="Conte um pouco sobre o layout, pra que serve, pontos fortes..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="submitLayout()">Enviar para revisão</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL LOGIN / REGISTER
+══════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header-row">
+      <div>
+        <div class="modal-title">Templários<span style="color:var(--gold)">.</span></div>
+        <div class="modal-sub">Acesse sua conta ou crie uma nova</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
+      <button class="modal-tab" id="tab-register" onclick="switchTab('register')">Criar conta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="modal-field">
+        <label>Usuário</label>
+        <input type="text" id="inp-user" placeholder="seu_usuario">
+      </div>
+      <div class="modal-field">
+        <label>Senha</label>
+        <input type="password" id="inp-pass" placeholder="••••••••">
+      </div>
+      <button class="modal-btn" onclick="doLogin()">Entrar</button>
+      <div class="modal-forgot">
+        Esqueceu a senha? <a onclick="showForgot()">Fala com um admin no grupo</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none;">
+      <div class="modal-field">
+        <label>Usuário</label>
+        <input type="text" id="inp-reg-user" placeholder="seu_usuario">
+        <div class="modal-help">Usado para fazer login</div>
+      </div>
+      <div class="modal-field">
+        <label>Nome no Clash of Clans</label>
+        <input type="text" id="inp-reg-clash" placeholder="Seu nome principal no jogo">
+        <div class="modal-help">Só a conta principal (pra te identificar)</div>
+      </div>
+      <div class="modal-field">
+        <label>Senha</label>
+        <input type="password" id="inp-reg-pass" placeholder="••••••••">
+      </div>
+      <button class="modal-btn" onclick="doRegister()">Criar conta</button>
+    </div>
+
   </div>
 </div>
 
-<!-- FORGOT -->
-<div class="page" id="page-forgot">
-  <div class="forgot-info">
-    <div class="icon">📱</div>
-    <h3>Recuperar Acesso</h3>
-    <p>Não temos email cadastrado pra evitar complicação. Fala com um <strong style="color:var(--text);">Admin</strong> no grupo da aliança e ele vai resetar sua senha.</p>
-    <button class="wz-btn">💬 Falar no WhatsApp</button>
-    <div style="margin-top:16px;"><a onclick="openModal()" style="color:var(--orange);cursor:pointer;font-size:13px;">← Voltar ao login</a></div>
-  </div>
-</div>
-
-<div class="toast" id="toast">✅ Layout enviado! Aguarde aprovação de um moderador.</div>
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Copiado!</div>
 
 <script>
-const CLANS=[
-  {name:"⚔️ Guerreiros BR",tag:"#2PP2YQYP",level:18,members:"45/50",minTH:"TH15",trophies:"3000",color:"#f97316",icon:"🔥"},
-  {name:"🛡️ Defesa Total",tag:"#ABCD1234",level:14,members:"38/50",minTH:"TH14",trophies:"2500",color:"#4a9eff",icon:"🛡️"},
-  {name:"🌾 FarmBR Elite",tag:"#QWER5678",level:11,members:"42/50",minTH:"TH12",trophies:"1500",color:"#4caf50",icon:"🌾"},
-  {name:"🏆 Trophy Rush",tag:"#ZXCV9012",level:16,members:"50/50",minTH:"TH15",trophies:"4000",color:"#e8c060",icon:"🏆"},
-  {name:"💀 Dark Legion",tag:"#DARK1234",level:20,members:"48/50",minTH:"TH16",trophies:"5000",color:"#9b72dd",icon:"💀"},
-  {name:"⚡ Speed Clan",tag:"#SPED5678",level:9,members:"30/50",minTH:"TH10",trophies:"1000",color:"#4a9eff",icon:"⚡"},
-  {name:"🌙 Noturno BR",tag:"#NOTU0001",level:13,members:"44/50",minTH:"TH13",trophies:"2000",color:"#e24b4a",icon:"🌙"},
-  {name:"🎯 Precisão War",tag:"#PREC9999",level:17,members:"46/50",minTH:"TH15",trophies:"3500",color:"#c9963a",icon:"🎯"},
-];
-const EMOJIS=["🏰","⚔️","🛡️","💥","🌋","🗡️","🔥","💀","⚡","🏹"];
-const LAYOUTS=[
-  {id:1,title:"Anti-3 Estrelas Clássico",th:15,tags:["war"],desc:"Layout focado em dificultar o 3 estrelas em guerra. Compartimento central bem protegido com Eagle Artillery estratégico.",author:"ZeWarrior",views:1240,likes:87,comments:12,indicado:true,coc:"https://link.clashofclans.com"},
-  {id:2,title:"Farming Passivo TH16",th:16,tags:["farm"],desc:"Recursos bem protegidos no centro, townhall exposto pra não perder escudo. Ótimo pra dormir farmando.",author:"FarmKing",views:892,likes:54,comments:6,indicado:false,coc:"https://link.clashofclans.com"},
-  {id:3,title:"Legends Ranked Completo",th:17,tags:["ranked","war"],desc:"Layout competitivo para Legends League. Testado e aprovado por jogadores top 1000 global.",author:"LegendPlayer",views:3400,likes:210,comments:45,indicado:true,coc:"https://link.clashofclans.com"},
-  {id:4,title:"Upgrade Safe TH13",th:13,tags:["upgrade"],desc:"Layout pra quando tá upando o TH. Townhall protegido pra não tomar muito enquanto tá em obras.",author:"NoobMaster99",views:567,likes:33,comments:4,indicado:false,coc:"https://link.clashofclans.com"},
-  {id:5,title:"Trophy Push 5000+",th:15,tags:["trophy"],desc:"Focado em manter troféus altos. Defesas organizadas pra maximizar danos aos atacantes.",author:"TrophyHunter",views:1100,likes:76,comments:9,indicado:false,coc:"https://link.clashofclans.com"},
-  {id:6,title:"Hybrid War/Farm TH14",th:14,tags:["hybrid","war","farm"],desc:"O melhor dos dois mundos. Protege recurso E é difícil de 3 estrelas. Perfeito pra quem joga casual.",author:"HybridMaster",views:2200,likes:143,comments:28,indicado:true,coc:"https://link.clashofclans.com"},
-  {id:7,title:"Anti-Drag TH12",th:12,tags:["war"],desc:"Especialmente projetado pra baralhar Dragon Lightning, muito usado no TH12.",author:"DefenseKing",views:445,likes:28,comments:3,indicado:false,coc:"https://link.clashofclans.com"},
-  {id:8,title:"Speed Farm TH11",th:11,tags:["farm","upgrade"],desc:"Coloca no farm e esquece. Simples, funcional, sem frescura.",author:"SimpleFarm",views:310,likes:19,comments:2,indicado:false,coc:"https://link.clashofclans.com"},
-  {id:9,title:"CWL War Beast TH16",th:16,tags:["war","ranked"],desc:"Desenvolvido especialmente pra CWL. Posicionamento das Scattershots é o diferencial.",author:"CWLPro",views:1890,likes:122,comments:31,indicado:true,coc:"https://link.clashofclans.com"},
-  {id:10,title:"Trophy Noturno TH14",th:14,tags:["trophy","farm"],desc:"Pra quem quer empurrar troféu à noite sem ficar acordado. Defesa que funciona sozinha.",author:"NightOwl",views:678,likes:44,comments:7,indicado:false,coc:"https://link.clashofclans.com"},
-];
-let activeTag='all';
-let loggedIn=false;
-let loggedUser={name:'',clash:''};
+// ═══════════════════════════════════════════════════
+// DADOS MOCK — serão substituídos por Firestore + API CoC
+// ═══════════════════════════════════════════════════
 
-function tagColor(t){return{war:'war',farm:'farm',ranked:'ranked',upgrade:'upgrade',trophy:'trophy',hybrid:'hybrid'}[t]||'war';}
+// CVs suportados — adicionar novos aqui quando sair TH18, TH19...
+// BASTA adicionar ao array, o resto é automático
+const TH_LIST = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+// TH18 já está incluído — quando sair é só adicionar 19 aqui
 
-function layoutCard(l,compact){
-  const thc=`<span class="th-badge">TH ${l.th}</span>`;
-  const indc=l.indicado?`<span class="ind-badge">⭐ INDICADO</span>`:'';
-  const tags=l.tags.map(t=>`<span class="ltag ${tagColor(t)}">${t.toUpperCase()}</span>`).join('');
-  const emoji=EMOJIS[l.id%EMOJIS.length];
-  return`<div class="layout-card ${l.indicado?'indicado':''}" onclick="showDetail(${l.id})">
-    <div class="layout-img"><div class="layout-img-inner">${emoji}</div>
-      <div class="layout-img-overlay">${thc}${indc}</div>
-    </div>
-    <div class="layout-body">
-      <div class="layout-title">${l.title}</div>
-      <div class="layout-author">por <span>${l.author}</span></div>
-      <div class="layout-tags">${tags}</div>
-      <div class="layout-desc">${l.desc}</div>
-      <div class="layout-footer">
-        <div class="layout-stats">
-          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${l.views}</span>
-          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${l.likes}</span>
-          <span class="lstat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>${l.comments}</span>
-        </div>
-        <button class="coc-btn" onclick="event.stopPropagation();window.open('${l.coc}')">Abrir no CoC</button>
-      </div>
-    </div>
-  </div>`;
+const TAGS = ['WAR','FARM','RANKED','TROPHY','UPGRADE','HYBRID'];
+const TAG_CLASS = { WAR:'war', FARM:'farm', RANKED:'ranked', TROPHY:'trophy', UPGRADE:'upgrade', HYBRID:'hybrid' };
+
+// Clãs mock — virão do Firestore + API CoC via /api/coc?tag=XXXX
+const CLANS = [
+  { name:'Templários', tag:'#XXXXXX', level:15, members:50, minTH:14, trophies:3000, icon:'⚔️' },
+  { name:'Templários 2', tag:'#YYYYYY', level:12, members:48, minTH:12, trophies:2500, icon:'🛡️' },
+  { name:'Templários 3', tag:'#ZZZZZZ', level:10, members:45, minTH:10, trophies:2000, icon:'🏹' },
+  { name:'Templários War', tag:'#WWWWWW', level:18, members:50, minTH:16, trophies:4000, icon:'🔥' },
+];
+
+// Layouts mock — virão do Firestore
+const LAYOUTS = [
+  { id:1, title:'Anti-3 Estrelas TH17', th:17, tags:['WAR','RANKED'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base anti-3 estrelas focada em guerra. Excelente contra Blizzard e Hydra.', author:'TmplAdmin', likes:42, views:318, comments:8, featured:true, status:'approved' },
+  { id:2, title:'Farm Tranquilo TH16', th:16, tags:['FARM'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base de farm para proteger recursos. Perfeita para ficar offline sem perder ouro.', author:'GuerreiroZ', likes:31, views:201, comments:4, featured:false, status:'approved' },
+  { id:3, title:'Hybrid TH15 Guerra', th:15, tags:['HYBRID','WAR'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Equilibra farm e guerra. Boa pra quem joga ranked também.', author:'FarmKing', likes:27, views:175, comments:2, featured:true, status:'approved' },
+  { id:4, title:'Trophy Push TH14', th:14, tags:['TROPHY','RANKED'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base para subir de troféus e manter ranking alto.', author:'LegendPush', likes:19, views:144, comments:5, featured:false, status:'approved' },
+  { id:5, title:'Upgrade TH13', th:13, tags:['UPGRADE'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Base para upar com segurança. Proteção máxima de recursos enquanto você upgruda defesas.', author:'UpgradeKing', likes:15, views:98, comments:1, featured:false, status:'approved' },
+  { id:6, title:'Anti-Zap TH18', th:18, tags:['WAR'], imgUrl:'', cocLink:'https://link.clashofclans.com/', desc:'Primeira base TH18 da aliança! Anti-zap para o novo Clan Castle.', author:'TmplAdmin', likes:55, views:412, comments:12, featured:true, status:'approved' },
+];
+
+// ═══════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════
+let loggedIn = false;
+let loggedUser = null; // { username, clashName, role }
+let activeTag = 'ALL';
+let activeTab = 'login';
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  buildThSelects();
+  buildTagBtns();
+  buildTagChecks();
+  renderStats();
+  renderHomeClans();
+  renderHomeLayouts();
+  renderClansPage();
+  renderLayouts();
 }
 
-function renderClanGrid(){
-  document.getElementById('clan-grid').innerHTML=CLANS.map(c=>`
+// ═══════════════════════════════════════════════════
+// BUILD DINÂMICO — TH e TAGS
+// ═══════════════════════════════════════════════════
+function buildThSelects() {
+  // Filtro de layouts
+  const sel = document.getElementById('th-filter');
+  sel.innerHTML = '<option value="all">Todos os CVs</option>' +
+    [...TH_LIST].reverse().map(n => `<option value="${n}">CV ${n}</option>`).join('');
+
+  // Select do formulário de envio
+  const fSel = document.getElementById('f-th');
+  fSel.innerHTML = [...TH_LIST].reverse().map(n => `<option value="${n}">CV ${n}</option>`).join('');
+}
+
+function buildTagBtns() {
+  const wrap = document.getElementById('tag-btns');
+  wrap.innerHTML = `<button class="tag-btn active-all" data-tag="ALL" onclick="setTag('ALL')">Todos</button>` +
+    TAGS.map(t => `<button class="tag-btn" data-tag="${t}" onclick="setTag('${t}')">${t}</button>`).join('');
+}
+
+function buildTagChecks() {
+  const wrap = document.getElementById('tag-checks');
+  wrap.innerHTML = TAGS.map(t =>
+    `<span class="tag-check" data-tag="${t}" onclick="toggleTagCheck(this,'${t}')">${t}</span>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════
+function renderStats() {
+  document.getElementById('stat-clans').textContent = CLANS.length;
+  document.getElementById('stat-layouts').textContent = LAYOUTS.filter(l => l.status === 'approved').length;
+  // Total de membros somando clãs (virá da API)
+  const total = CLANS.reduce((a, c) => a + c.members, 0);
+  document.getElementById('stat-members').textContent = total + '+';
+}
+
+// ═══════════════════════════════════════════════════
+// CLAN CARDS
+// ═══════════════════════════════════════════════════
+function clanCard(c) {
+  return `
     <div class="clan-card">
-      <div class="clan-header">
-        <div class="clan-badge" style="background:${c.color}22;font-size:22px;">${c.icon}</div>
-        <div class="clan-info"><h3>${c.name}</h3><div class="tag">${c.tag}</div></div>
+      <div class="clan-top">
+        <div class="clan-icon">${c.icon}</div>
+        <div>
+          <div class="clan-name">${c.name}</div>
+          <div class="clan-tag">${c.tag}</div>
+        </div>
       </div>
-      <div class="clan-meta">
-        <span class="meta-pill th">Mín. ${c.minTH}</span>
-        <span class="meta-pill">🏆 ${c.trophies}+</span>
-        <span class="meta-pill">Nível ${c.level}</span>
-        <span class="meta-pill">👥 ${c.members}</span>
+      <div class="clan-pills">
+        <span class="pill gold">Mín. CV ${c.minTH}</span>
+        <span class="pill">🏆 ${c.trophies}+</span>
+        <span class="pill">Nível ${c.level}</span>
+        <span class="pill">👥 ${c.members}</span>
       </div>
-      <button class="clan-btn" onclick="window.open('https://link.clashofclans.com/?action=OpenClanProfile&tag=${encodeURIComponent(c.tag)}')">Ver Clã no CoC ⚔️</button>
+      <button class="clan-link-btn" onclick="window.open('https://link.clashofclans.com/?action=OpenClanProfile&tag=${encodeURIComponent(c.tag)}')">
+        ⚔️ Ver no Clash of Clans
+      </button>
     </div>
-  `).join('');
+  `;
 }
 
-function renderFeatured(){
-  const feat=LAYOUTS.filter(l=>l.indicado).slice(0,3);
-  document.getElementById('home-featured').innerHTML=feat.map(l=>layoutCard(l)).join('');
+function renderHomeClans() {
+  document.getElementById('home-clans').innerHTML = CLANS.slice(0, 4).map(clanCard).join('');
 }
 
-function renderLayouts(){
-  const th=document.getElementById('th-filter').value;
-  let list=LAYOUTS;
-  if(th!=='all') list=list.filter(l=>l.th==th);
-  if(activeTag!=='all') list=list.filter(l=>l.tags.includes(activeTag));
-  document.getElementById('layout-grid').innerHTML=list.length?list.map(l=>layoutCard(l)).join(''):`<div style="color:var(--muted);font-size:14px;padding:32px 0;">Nenhum layout encontrado com esses filtros.</div>`;
+function renderClansPage() {
+  document.getElementById('clans-grid').innerHTML = CLANS.map(clanCard).join('');
 }
 
-function setTag(t){
-  activeTag=t;
-  document.querySelectorAll('.tag-pill').forEach(p=>{
-    p.classList.remove('active');
-    if(p.dataset.tag===t) p.classList.add('active');
+// ═══════════════════════════════════════════════════
+// LAYOUT CARDS
+// ═══════════════════════════════════════════════════
+function layoutCard(l) {
+  const tags = l.tags.map(t => `<span class="ltag ltag-${TAG_CLASS[t]}">${t}</span>`).join('');
+  const imgContent = l.imgUrl
+    ? `<img src="${l.imgUrl}" alt="${l.title}" onerror="this.parentNode.innerHTML='🏰'">`
+    : '🏰';
+  const featBadge = l.featured ? `<span class="feat-badge">⭐ Destaque</span>` : '';
+  return `
+    <div class="layout-card${l.featured ? ' featured' : ''}" onclick="showDetail(${l.id})">
+      <div class="layout-img">
+        ${imgContent}
+        <div class="layout-img-badges">
+          <span class="th-badge">CV ${l.th}</span>
+          ${featBadge}
+        </div>
+      </div>
+      <div class="layout-body">
+        <div class="layout-title">${l.title}</div>
+        <div class="layout-desc">${l.desc}</div>
+        <div class="layout-tags">${tags}</div>
+        <div class="layout-footer">
+          <div class="layout-meta">
+            <span class="lmeta">❤️ ${l.likes}</span>
+            <span class="lmeta">👁 ${l.views}</span>
+            <span class="lmeta">💬 ${l.comments}</span>
+          </div>
+          <button class="coc-btn" onclick="event.stopPropagation();window.open('${l.cocLink}')">Abrir CoC</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderHomeLayouts() {
+  const feat = LAYOUTS.filter(l => l.featured && l.status === 'approved').slice(0, 3);
+  document.getElementById('home-layouts').innerHTML = feat.map(layoutCard).join('');
+}
+
+function renderLayouts() {
+  const th = document.getElementById('th-filter').value;
+  let list = LAYOUTS.filter(l => l.status === 'approved');
+  if (th !== 'all') list = list.filter(l => l.th == th);
+  if (activeTag !== 'ALL') list = list.filter(l => l.tags.includes(activeTag));
+  const grid = document.getElementById('layout-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>Nenhum layout encontrado com esses filtros.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(layoutCard).join('');
+}
+
+function setTag(t) {
+  activeTag = t;
+  document.querySelectorAll('#tag-btns .tag-btn').forEach(btn => {
+    btn.className = 'tag-btn';
+    if (btn.dataset.tag === t) {
+      btn.className = 'tag-btn active-' + (t === 'ALL' ? 'all' : TAG_CLASS[t] || 'all');
+    }
   });
   renderLayouts();
 }
 
-function showPage(p){
-  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active');
-  const nb=document.getElementById('nb-'+p);
-  if(nb) nb.classList.add('active');
-  window.scrollTo(0,0);
-  if(p==='enviar'){
-    document.getElementById('enviar-logged').style.display=loggedIn?'block':'none';
-    document.getElementById('enviar-logoff').style.display=loggedIn?'none':'block';
-  }
-}
+// ═══════════════════════════════════════════════════
+// DETAIL
+// ═══════════════════════════════════════════════════
+function showDetail(id) {
+  const l = LAYOUTS.find(x => x.id === id);
+  if (!l) return;
+  const tags = l.tags.map(t => `<span class="ltag ltag-${TAG_CLASS[t]}" style="font-size:12px;padding:3px 10px;">${t}</span>`).join('');
+  const imgContent = l.imgUrl
+    ? `<img src="${l.imgUrl}" alt="${l.title}">`
+    : '🏰';
 
-function showDetail(id){
-  const l=LAYOUTS.find(x=>x.id===id);
-  if(!l) return;
-  const tags=l.tags.map(t=>`<span class="ltag ${tagColor(t)}">${t.toUpperCase()}</span>`).join(' ');
-  const emoji=EMOJIS[l.id%EMOJIS.length];
-  const ind=l.indicado?`<span class="ind-badge" style="padding:4px 10px;font-size:12px;">⭐ INDICADO</span>`:'';
-  document.getElementById('detail-content').innerHTML=`
-    <div class="detail-img">${emoji}</div>
-    <div class="detail-header">
-      <div class="detail-title">${l.title}</div>
-      ${ind}
-    </div>
-    <div class="detail-body">
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-layout">
       <div>
-        <div class="detail-desc">
-          <h4>Descrição</h4>
-          <p>${l.desc}</p>
-        </div>
-        <div class="detail-desc">
-          <h4>Tags</h4>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">${tags}</div>
-        </div>
-        <div class="comments-section">
-          <div class="sec-title" style="font-size:15px;margin-bottom:12px;">💬 Comentários (${l.comments})</div>
-          <div class="comment-box"><div class="comment-user">FarmKing</div><div class="comment-text">Usei em 5 guerras seguidas, funcionou demais! Anti-Blizzard é show.</div><div class="comment-date">há 2 dias</div></div>
-          <div class="comment-box"><div class="comment-user">LegendPlayer</div><div class="comment-text">Testei no ranked também, segurou bem. Vale muito o uso.</div><div class="comment-date">há 5 dias</div></div>
-          <div class="comment-input-row">
-            <input type="text" placeholder="${loggedIn?'Deixe um comentário...':'Faça login para comentar'}">
-            <button class="comment-send" onclick="showToast()">Enviar</button>
+        <div class="detail-img-wrap">${imgContent}</div>
+        <div class="detail-title">${l.title}</div>
+        <div class="detail-author">Enviado por <strong>${l.author}</strong> ${l.featured ? '· <span class="feat-badge" style="font-size:11px;padding:2px 8px;">⭐ Destaque</span>' : ''}</div>
+        <div class="detail-tags">${tags}</div>
+        <div class="detail-desc-label">Sobre este layout</div>
+        <div class="detail-desc-text">${l.desc}</div>
+
+        <!-- COMENTÁRIOS -->
+        <div class="comments-wrap">
+          <div class="comments-title">Comentários (${l.comments})</div>
+          <div class="comment">
+            <div class="comment-top">
+              <div class="comment-avatar">F</div>
+              <div class="comment-name">FarmKing</div>
+              <div class="comment-date">há 2 dias</div>
+            </div>
+            <div class="comment-text">Usei em 5 guerras seguidas, funcionou demais! Anti-Blizzard é show.</div>
+          </div>
+          <div class="comment">
+            <div class="comment-top">
+              <div class="comment-avatar">L</div>
+              <div class="comment-name">LegendPlayer</div>
+              <div class="comment-date">há 5 dias</div>
+            </div>
+            <div class="comment-text">Testei no ranked também, segurou bem. Vale muito o uso.</div>
+          </div>
+          <div class="comment-input-wrap">
+            <input class="comment-input" type="text" placeholder="${loggedIn ? 'Deixe um comentário...' : 'Faça login para comentar'}" ${!loggedIn ? 'disabled' : ''}>
+            <button class="comment-send" onclick="showToast('Comentário enviado!')">Enviar</button>
           </div>
         </div>
       </div>
-      <div>
-        <div class="detail-meta">
-          <div class="meta-row"><span class="k">Town Hall</span><span class="v">TH ${l.th}</span></div>
-          <div class="meta-row"><span class="k">Enviado por</span><span class="v">${l.author}</span></div>
-          <div class="meta-row"><span class="k">Visualizações</span><span class="v">${l.views}</span></div>
-          <div class="meta-row"><span class="k">Curtidas</span><span class="v">❤️ ${l.likes}</span></div>
-          <div class="meta-row"><span class="k">Comentários</span><span class="v">💬 ${l.comments}</span></div>
+
+      <div class="detail-sidebar">
+        <div class="detail-meta-card">
+          <div class="detail-meta-row"><span class="k">Town Hall</span><span class="v">CV ${l.th}</span></div>
+          <div class="detail-meta-row"><span class="k">Curtidas</span><span class="v">❤️ ${l.likes}</span></div>
+          <div class="detail-meta-row"><span class="k">Visualizações</span><span class="v">👁 ${l.views}</span></div>
+          <div class="detail-meta-row"><span class="k">Comentários</span><span class="v">💬 ${l.comments}</span></div>
         </div>
-        <button onclick="window.open('${l.coc}')" class="btn-main" style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
-          <span>⚔️</span> Abrir no Clash of Clans
-        </button>
-        <button onclick="navigator.clipboard.writeText('${l.coc}');showToast2()" class="btn-main" style="margin-top:8px;background:var(--card2);border:1px solid var(--border2);color:var(--text);">
-          🔗 Copiar Link
-        </button>
+        <button class="btn-primary" onclick="window.open('${l.cocLink}')">⚔️ Abrir no Clash of Clans</button>
+        <button class="btn-secondary" onclick="navigator.clipboard.writeText('${l.cocLink}');showToast('Link copiado!')">🔗 Copiar Link</button>
       </div>
     </div>
   `;
   showPage('detail');
 }
 
-function openModal(){document.getElementById('modal-overlay').style.display='flex';}
-function closeModal(){document.getElementById('modal-overlay').style.display='none';}
-function closeModalOutside(e){if(e.target.id==='modal-overlay') closeModal();}
+// ═══════════════════════════════════════════════════
+// ENVIAR LAYOUT
+// ═══════════════════════════════════════════════════
+let selectedTags = [];
 
-function doLogin(){
-  const u=document.getElementById('inp-user').value.trim();
-  const p=document.getElementById('inp-pass').value;
-  if(!u||!p){alert('Preencha usuário e senha');return;}
-  loggedIn=true;
-  loggedUser={name:u,clash:'ClashPlayer'};
-  document.getElementById('nav-login-btn').textContent='👤 '+u;
-  document.getElementById('nav-login-btn').onclick=doLogout;
-  closeModal();
-  showToast2('Login realizado! Bem-vindo, '+u+' ⚔️');
+function toggleTagCheck(el, tag) {
+  if (selectedTags.includes(tag)) {
+    selectedTags = selectedTags.filter(t => t !== tag);
+    el.className = 'tag-check';
+  } else {
+    selectedTags.push(tag);
+    el.className = `tag-check sel-${TAG_CLASS[tag]}`;
+  }
 }
-function doLogout(){loggedIn=false;document.getElementById('nav-login-btn').textContent='Entrar';document.getElementById('nav-login-btn').onclick=openModal;}
 
-function showToast(){const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-function showToast2(msg){const t=document.getElementById('toast');if(msg)t.textContent='✅ '+msg;else t.textContent='✅ Copiado!';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function submitLayout() {
+  const title = document.getElementById('f-title').value.trim();
+  const th = document.getElementById('f-th').value;
+  const img = document.getElementById('f-img').value.trim();
+  const coc = document.getElementById('f-coc').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  if (!title || !th || !coc || !desc) { showToast('Preencha todos os campos obrigatórios'); return; }
+  if (selectedTags.length === 0) { showToast('Selecione pelo menos uma tag'); return; }
+  // TODO: salvar no Firestore com status 'pending'
+  showToast('Layout enviado! Aguardando aprovação do moderador.');
+}
 
-renderClanGrid();
-renderFeatured();
-renderLayouts();
+// ═══════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════════
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  const nb = document.getElementById('nb-' + p);
+  if (nb) nb.classList.add('active');
+  window.scrollTo(0, 0);
+  // Mostra/oculta forms de envio baseado em login
+  if (p === 'enviar') {
+    document.getElementById('enviar-logoff').style.display = loggedIn ? 'none' : 'block';
+    document.getElementById('enviar-logado').style.display = loggedIn ? 'block' : 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// AUTH (mock — será substituído por Firebase Auth)
+// ═══════════════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  if (!u || !p) { showToast('Preencha usuário e senha'); return; }
+  // TODO: Firebase Auth — email gerado como u + '@templarios.gg'
+  loggedIn = true;
+  loggedUser = { username: u, clashName: 'ClashPlayer', role: 'user' };
+  updateNavAuth();
+  closeModal();
+  showToast('Bem-vindo, ' + u + ' ⚔️');
+}
+
+function doRegister() {
+  const u = document.getElementById('inp-reg-user').value.trim();
+  const clash = document.getElementById('inp-reg-clash').value.trim();
+  const p = document.getElementById('inp-reg-pass').value;
+  if (!u || !clash || !p) { showToast('Preencha todos os campos'); return; }
+  // TODO: Firebase Auth createUserWithEmailAndPassword(u + '@templarios.gg', p)
+  // + salvar em Firestore: users/{uid} = { username: u, clashName: clash, role: 'user' }
+  loggedIn = true;
+  loggedUser = { username: u, clashName: clash, role: 'user' };
+  updateNavAuth();
+  closeModal();
+  showToast('Conta criada! Bem-vindo, ' + clash + ' ⚔️');
+}
+
+function doLogout() {
+  loggedIn = false;
+  loggedUser = null;
+  updateNavAuth();
+  showToast('Até mais!');
+}
+
+function updateNavAuth() {
+  document.getElementById('btn-login').style.display = loggedIn ? 'none' : 'block';
+  document.getElementById('nav-user-info').style.display = loggedIn ? 'flex' : 'none';
+  if (loggedIn && loggedUser) {
+    document.getElementById('nav-avatar').textContent = loggedUser.username[0].toUpperCase();
+    document.getElementById('nav-username').textContent = loggedUser.clashName || loggedUser.username;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════
+function openModal(tab) {
+  document.getElementById('modal-overlay').classList.add('open');
+  switchTab(tab || 'login');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target.id === 'modal-overlay') closeModal(); }
+function switchTab(t) {
+  activeTab = t;
+  document.getElementById('form-login').style.display = t === 'login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = t === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').className = 'modal-tab' + (t === 'login' ? ' active' : '');
+  document.getElementById('tab-register').className = 'modal-tab' + (t === 'register' ? ' active' : '');
+}
+function showForgot() {
+  closeModal();
+  showToast('Fale com um admin no grupo do WhatsApp para resetar sua senha.');
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✅ ' + (msg || 'Feito!');
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── START ───
+init();
 </script>
 </body>
 </html>
