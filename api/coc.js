@@ -1,20 +1,18 @@
 import { Client } from 'clashofclans.js';
 
-// Instância única por cold-start (reutiliza token enquanto o worker vive)
 let client = null;
 
 async function getClient() {
   if (client) return client;
   client = new Client({ cache: true });
   await client.login({
-    email: process.env.cottersupreme@gmail.com,       // email do dev.clashofclans.com
-    password: process.env.Nz3tzf5k.123  // senha do dev.clashofclans.com
+    email: process.env.cottersupreme@gmail.com,
+    password: process.env.nz3tzf5k.123
   });
   return client;
 }
 
 export default async function handler(req, res) {
-  // CORS pro seu front
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   const { tag, type = 'clan' } = req.query;

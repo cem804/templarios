@@ -3,9 +3,3 @@
     "clashofclans.js": "^3.2.0"
   }
 }
-```
-
-**No Vercel Dashboard** → Settings → Environment Variables:
-```
-COC_EMAIL    = cottersupreme@gmail.com
-COC_PASSWORD = Nz3tzf5k.123
