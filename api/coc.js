@@ -1,52 +1,37 @@
-import fetch from "node-fetch";
-import * as cheerio from "cheerio";
+import { Client } from 'clashofclans.js';
+
+// Instância única por cold-start (reutiliza token enquanto o worker vive)
+let client = null;
+
+async function getClient() {
+  if (client) return client;
+  client = new Client({ cache: true });
+  await client.login({
+    email: process.env.cottersupreme@gmail.com,       // email do dev.clashofclans.com
+    password: process.env.Nz3tzf5k.123  // senha do dev.clashofclans.com
+  });
+  return client;
+}
 
 export default async function handler(req, res) {
+  // CORS pro seu front
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  const { tag, type = 'clan' } = req.query;
+  if (!tag) return res.status(400).json({ error: 'tag obrigatória' });
+
   try {
-    const tag = req.query.tag; // %23ABC123
+    const coc = await getClient();
 
-    const response = await fetch(
-      `https://www.clashofstats.com/clans/${tag}`
-    );
+    let data;
+    if (type === 'clan')         data = await coc.getClan(tag);
+    else if (type === 'members') data = await coc.getClanMembers(tag);
+    else if (type === 'wars')    data = await coc.getCurrentWar(tag);
+    else return res.status(400).json({ error: 'type inválido' });
 
-    const html = await response.text();
-    const $ = cheerio.load(html);
-
-    // 🏷️ Nome do clã
-    const name = $("h1").first().text().trim();
-
-    // 🛡️ Badge (logo)
-    const badge = $("img").first().attr("src");
-
-    // ⭐ Nível do clã
-    const level = $("body")
-      .text()
-      .match(/Level\s*(\d+)/i)?.[1] || null;
-
-    // 👥 Membros
-    const members = $("body")
-      .text()
-      .match(/Members\s*(\d+)\/50/i)?.[1] || null;
-
-    // 🏆 Troféus (opcional)
-    const trophies = $("body")
-      .text()
-      .match(/Points\s*([\d,]+)/i)?.[1] || null;
-
-    // 📋 Requisitos (às vezes aparece como trophies required)
-    const requiredTrophies = $("body")
-      .text()
-      .match(/Required Trophies\s*([\d,]+)/i)?.[1] || null;
-
-    res.json({
-      name,
-      badge,
-      level,
-      members,
-      trophies,
-      requiredTrophies,
-    });
+    res.status(200).json(data);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar clã" });
+    console.error(err);
+    res.status(err.status || 500).json({ error: err.message });
   }
 }
