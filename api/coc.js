@@ -16,14 +16,13 @@
 const API_KEY = 'SUA_CHAVE_AQUI'; // ← cola a chave aqui por enquanto
 
 export default async function handler(req, res) {
-  // CORS — permite o frontend chamar esta function
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-
-  const { tag } = req.query;
-  if (!tag) {
-    return res.status(400).json({ error: 'Tag obrigatória. Use /api/coc?tag=%23ABC123' });
-  }
+  
+  // Retorna o IP de saída do Vercel
+  const response = await fetch('https://api.ipify.org?format=json');
+  const data = await response.json();
+  return res.status(200).json({ vercel_ip: data.ip });
+}
 
   try {
     const encoded = encodeURIComponent(tag);
