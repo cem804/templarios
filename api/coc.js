@@ -7,8 +7,8 @@ async function getClient() {
   if (client) return client;
   client = new Client({ cache: true });
   await client.login({
-    email: process.env.COC_EMAIL,       // email do dev.clashofclans.com
-    password: process.env.COC_PASSWORD  // senha do dev.clashofclans.com
+    email: process.env.cottersupreme@gmail.com,       // email do dev.clashofclans.com
+    password: process.env.Nz3tzf5k.123  // senha do dev.clashofclans.com
   });
   return client;
 }
