@@ -1,4 +1,4 @@
-package.json{
+{
   "dependencies": {
     "clashofclans.js": "^3.2.0"
   }
