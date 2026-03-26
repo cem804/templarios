@@ -1,0 +1,9 @@
+export default {
+  async fetch(request) {
+    const ip = await fetch('https://api.ipify.org?format=json');
+    const data = await ip.json();
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
